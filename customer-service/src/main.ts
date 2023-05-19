@@ -1,12 +1,12 @@
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { MicroserviceOptions } from '@nestjs/microservices';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AppModule,
-  );
+  const app = await NestFactory.create(AppModule);
 
-  await app.listen();
+  await app.listen(4003, () =>
+    Logger.log('Customer-Service running on port: ' + 4003, 'Bootstrap'),
+  );
 }
 bootstrap();
