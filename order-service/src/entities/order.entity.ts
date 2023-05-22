@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 
 @Entity()
 export class OrderEntity {
@@ -6,5 +6,19 @@ export class OrderEntity {
   id: number;
 
   @Column()
+  @Index()
   customerId: number;
+
+  @Column()
+  @Index()
+  stockId: number;
+
+  @Column()
+  orderDate: Date;
+
+  @Column()
+  totalAmount: number;
+
+  @Column()
+  status: string;
 }

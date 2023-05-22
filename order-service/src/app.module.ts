@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { SagaModule } from './saga.module';
+import { SagaModule } from './saga/saga.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
+import { OrderModule } from './order/order.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ConfigModule } from '@nestjs/config';
       migrationsTableName: 'migrations',
     }),
     SagaModule,
+    OrderModule,
   ],
   controllers: [AppController],
   providers: [AppService],
