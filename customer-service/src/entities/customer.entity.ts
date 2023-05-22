@@ -1,7 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
 @Entity()
-export class Customer {
+export class CustomerEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -16,4 +16,7 @@ export class Customer {
 
   @Column()
   address: string;
+
+  @Column({ default: 0 })
+  balance: number;
 }
