@@ -1,69 +1,29 @@
-import { Body, Controller, Inject, Post } from '@nestjs/common';
-import {
-  ClientProxy,
-  Ctx,
-  MessagePattern,
-  Payload,
-} from '@nestjs/microservices';
-import { CreateOrderDto } from './order.interface';
+import { Controller, Post, Body } from '@nestjs/common';
 import { OrderService } from './order.service';
+import { CreateOrderDto } from './order.interface';
+import { MessagePattern } from '@nestjs/microservices';
 
-@Controller('order')
+@Controller('orders')
 export class OrderController {
-  constructor(
-    private readonly orderService: OrderService,
-
-    @Inject('SAGA_CLIENT')
-    private readonly sagaClient: ClientProxy,
-  ) {}
+  constructor(private readonly orderService: OrderService) {}
 
   @Post()
-  async create(@Body() createOrderDto: CreateOrderDto) {
-    const order = await this.orderService.createOrder(createOrderDto);
+  async createOrder(@Body() createOrderDto: CreateOrderDto) {
+    const orderId = await this.orderService.createOrder(createOrderDto);
 
-    // Publish a message to the Saga Coordinator to initiate the local transaction
-    const message = {
-      type: 'ORDER_CREATED',
-      payload: {
-        orderId: order.id,
-        customerId: createOrderDto.customerId,
-        stockId: createOrderDto.stockId,
-      },
-    };
-    this.sagaClient.emit('saga', message);
-
-    return { order };
+    // Return the created order ID
+    return { orderId };
   }
 
-  @MessagePattern('saga')
-  async handleSagaMessage(@Payload() message, @Ctx() context) {
-    const originalMessage = context.getMessage();
-    switch (message.type) {
-      case 'ORDER_CREATED':
-        try {
-          // Perform the local transaction
-          await this.orderService.confirmOrder(message.payload.orderId);
-          // Acknowledge the message
-          context.getChannelRef().ack(originalMessage);
-        } catch (e) {
-          // If the local transaction fails, initiate the compensating transaction
-          const compensatingMessage = {
-            type: 'ORDER_CONFIRMATION_FAILED',
-            payload: {
-              orderId: message.payload.orderId,
-            },
-          };
-          this.sagaClient.emit('saga', compensatingMessage);
-          // Acknowledge the message
-          context.getChannelRef().ack(originalMessage);
-        }
-        break;
-      case 'ORDER_CONFIRMATION_FAILED':
-        // Undo the effects of the failed local transaction
-        await this.orderService.cancelOrder(message.payload.orderId);
-        // Acknowledge the message
-        context.getChannelRef().ack(originalMessage);
-        break;
-    }
+  // ...
+
+  @MessagePattern({ cmd: 'getCustomerId' })
+  async handleGetCustomerIdMessage(data: { orderId: number }): Promise<number> {
+    const { orderId } = data;
+
+    // Retrieve the customer ID associated with the order from the database
+    const order = await this.orderService.findOne(orderId);
+
+    return order.customerId;
   }
 }

@@ -1,9 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientProxy, EventPattern } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { OrderEntity } from 'src/entities/order.entity';
 import { Repository } from 'typeorm';
 import { CreateOrderDto } from './order.interface';
+import { firstValueFrom } from 'rxjs';
+import { OrderStatus } from './order.enum';
 
 @Injectable()
 export class OrderService {
@@ -20,9 +22,19 @@ export class OrderService {
     const order = await this.orderRepository.save({ ...createOrderDto });
 
     // Emit the 'orderCreated' event to continue the saga
-    this.sagaClient.emit('orderCreated', { orderId: order.id });
+    await firstValueFrom(
+      this.sagaClient.emit('orderCreated', {
+        orderId: order.id,
+        totalAmount: order.totalAmount,
+        status: OrderStatus.Pending,
+      }),
+    );
 
     return order.id;
+  }
+
+  async findOne(orderId: number): Promise<OrderEntity> {
+    return await this.orderRepository.findOne({ where: { id: orderId } });
   }
 
   @EventPattern('customerValidated')
@@ -31,12 +43,9 @@ export class OrderService {
   }): Promise<void> {
     const { orderId } = payload;
 
-    // Perform order-related actions in response to the customerValidated event
-    // For example, you can update order status, trigger payment process, etc.
     console.log(`Customer validated event received for order ID: ${orderId}`);
 
-    // Emit the 'orderConfirmed' event to proceed with the saga workflow
-    this.sagaClient.emit('orderConfirmed', { orderId });
+    await firstValueFrom(this.sagaClient.emit('orderConfirmed', { orderId }));
   }
 
   @EventPattern('customerInvalidated')
@@ -45,11 +54,46 @@ export class OrderService {
   }): Promise<void> {
     const { orderId } = payload;
 
-    // Perform order-related actions in response to the customerInvalidated event
-    // For example, you can update order status, notify the customer, etc.
     console.log(`Customer invalidated event received for order ID: ${orderId}`);
 
-    // Emit the 'orderCancelled' event to proceed with the saga workflow
-    this.sagaClient.emit('orderCancelled', { orderId });
+    await firstValueFrom(this.sagaClient.emit('orderCancelled', { orderId }));
+  }
+
+  @EventPattern('orderConfirmed')
+  async handleOrderConfirmedEvent(payload: { orderId: number }): Promise<void> {
+    const { orderId } = payload;
+    const order = await this.orderRepository.findOne({
+      where: { id: orderId },
+      select: ['id'],
+    });
+    if (!order) {
+      Logger.error(`Order is not exist with orderId: ${orderId}`);
+      return;
+    }
+
+    Logger.log(`Order confirmed event received for order ID: ${orderId}`);
+    await this.orderRepository.save({
+      ...order,
+      status: OrderStatus.Confirm,
+    });
+  }
+
+  @EventPattern('orderCancelled')
+  async handleOrderCancelledEvent(payload: { orderId: number }): Promise<void> {
+    const { orderId } = payload;
+    const order = await this.orderRepository.findOne({
+      where: { id: orderId },
+      select: ['id'],
+    });
+    if (!order) {
+      Logger.error(`Order is not exist with orderId: ${orderId}`);
+      return;
+    }
+
+    Logger.log(`Order cancelled event received for order ID: ${orderId}`);
+    await this.orderRepository.save({
+      ...order,
+      status: OrderStatus.Cancel,
+    });
   }
 }
