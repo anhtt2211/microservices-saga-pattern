@@ -5,10 +5,10 @@ import {
   MessagePattern,
   Payload,
 } from '@nestjs/microservices';
-import { ICreateOrderDto } from './order.interface';
+import { CreateOrderDto } from './order.interface';
 import { OrderService } from './order.service';
 
-@Controller('/order')
+@Controller('order')
 export class OrderController {
   constructor(
     private readonly orderService: OrderService,
@@ -18,7 +18,7 @@ export class OrderController {
   ) {}
 
   @Post()
-  async create(@Body() createOrderDto: ICreateOrderDto) {
+  async create(@Body() createOrderDto: CreateOrderDto) {
     const order = await this.orderService.createOrder(createOrderDto);
 
     // Publish a message to the Saga Coordinator to initiate the local transaction

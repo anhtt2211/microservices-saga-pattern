@@ -1,6 +1,6 @@
 import { IsNotEmpty, IsNumber, IsPositive } from 'class-validator';
 
-export class ICreateOrderDto {
+export class CreateOrderDto {
   @IsNotEmpty()
   customerId: number;
 
