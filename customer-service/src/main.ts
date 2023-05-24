@@ -11,7 +11,7 @@ async function bootstrap() {
       transport: Transport.RMQ,
       options: {
         urls: ['amqp://localhost'],
-        queue: 'queue-saga',
+        queue: 'customer-queue',
         queueOptions: {
           durable: true,
         },

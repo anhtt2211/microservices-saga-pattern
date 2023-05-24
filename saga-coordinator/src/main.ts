@@ -13,7 +13,7 @@ async function bootstrap() {
     app.connectMicroservice({
       transport: Transport.RMQ,
       options: {
-        urls: ['amqp://localhost:5672'],
+        urls: ['amqp://localhost'],
         queue: 'order-queue',
         queueOptions: {
           durable: true,
@@ -28,7 +28,7 @@ async function bootstrap() {
     app.connectMicroservice({
       transport: Transport.RMQ,
       options: {
-        urls: ['amqp://localhost:5672'],
+        urls: ['amqp://localhost'],
         queue: 'customer-queue',
         queueOptions: {
           durable: true,
@@ -43,7 +43,7 @@ async function bootstrap() {
     app.connectMicroservice({
       transport: Transport.RMQ,
       options: {
-        urls: ['amqp://localhost:5672'],
+        urls: ['amqp://localhost'],
         queue: 'stock-queue',
         queueOptions: {
           durable: true,
