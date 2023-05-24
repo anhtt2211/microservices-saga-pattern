@@ -1,10 +1,7 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { SagaCoordinatorModule } from './saga-coordinator/saga-coordinator.module';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [SagaCoordinatorModule],
 })
 export class AppModule {}

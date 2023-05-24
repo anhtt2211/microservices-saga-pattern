@@ -9,7 +9,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         transport: Transport.RMQ,
         options: {
           urls: ['amqp://localhost'],
-          queue: 'saga-coordinator',
+          queue: 'queue-saga',
           queueOptions: {
             durable: true,
           },
