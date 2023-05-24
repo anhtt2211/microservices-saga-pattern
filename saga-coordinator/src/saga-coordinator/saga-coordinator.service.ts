@@ -83,13 +83,9 @@ export class SagaCoordinatorService {
       this.stockService.send<boolean>('reserveStock', { orderId }),
     );
     if (isStockReserved) {
-      await firstValueFrom(
-        this.stockService.emit('stockReserved', { orderId }),
-      );
+      this.stockService.emit('stockReserved', { orderId });
     } else {
-      await firstValueFrom(
-        this.stockService.emit('stockNotAvailable', { orderId }),
-      );
+      this.stockService.emit('stockNotAvailable', { orderId });
     }
   }
 
