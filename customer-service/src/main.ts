@@ -4,24 +4,31 @@ import { Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  try {
+    const app = await NestFactory.create(AppModule);
 
-  app.connectMicroservice({
-    transport: Transport.RMQ,
-    options: {
-      urls: ['amqp://localhost'],
-      queue: 'queue-saga',
-      queueOptions: {
-        durable: true,
+    app.connectMicroservice({
+      transport: Transport.RMQ,
+      options: {
+        urls: ['amqp://localhost'],
+        queue: 'queue-saga',
+        queueOptions: {
+          durable: true,
+        },
       },
-    },
-  });
+    });
 
-  await app.startAllMicroservices();
+    await app.startAllMicroservices();
 
-  await app.listen(4003, () =>
-    Logger.log('Order-Service running on port: ' + 4003, 'Bootstrap'),
-  );
+    await app.listen(4003, () =>
+      Logger.log('Order-Service running on port: ' + 4003, 'Bootstrap'),
+    );
+  } catch (error) {
+    Logger.error('Error during bootstrap:', error);
+  }
 }
 
-bootstrap();
+bootstrap().catch((error) => {
+  // Handle any errors that occurred during bootstrap
+  Logger.error('Error during bootstrap:', error);
+});
