@@ -1,7 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
-import { firstValueFrom } from 'rxjs';
 import { CustomerEntity } from 'src/entities/customer.entity';
 import { Repository } from 'typeorm';
 import { CreateCustomerDto } from './customer.interface';
@@ -12,7 +11,7 @@ export class CustomerService {
     @InjectRepository(CustomerEntity)
     private readonly customerRepository: Repository<CustomerEntity>,
 
-    @Inject('SAGA_CLIENT')
+    @Inject('customerClient')
     private readonly sagaClient: ClientProxy,
   ) {}
 
@@ -66,50 +65,6 @@ export class CustomerService {
       balance: customer.balance + totalAmount,
     }));
   }
-
-  // @EventPattern('orderCreated')
-  // async handleOrderCreatedEvent(payload: {
-  //   orderId: number;
-  //   totalAmout: number;
-  // }): Promise<void> {
-  //   const { orderId, totalAmout } = payload;
-
-  //   // Perform customer-related actions in response to the orderCreated event
-  //   // For example, you can check customer validity, update customer information, etc.
-  //   Logger.log(`Order created event received for order ID: ${orderId}`);
-
-  //   // Get the customer ID associated with the order
-  //   const customerId = await this.getCustomerFromOrder(orderId);
-
-  //   // Perform customer validity check and check customer balance
-  //   const isCustomerValid = await this.isCustomerValid(customerId, totalAmout);
-
-  //   if (isCustomerValid) {
-  //     // Emit the 'customerApproved' event to proceed with the saga workflow
-  //     await firstValueFrom(
-  //       this.sagaClient.emit('customerValidated', { orderId }),
-  //     );
-  //   } else {
-  //     // Emit the 'customerRejected' event to proceed with the saga workflow
-  //     await firstValueFrom(
-  //       this.sagaClient.emit('customerInvalidated', { orderId }),
-  //     );
-  //   }
-  // }
-
-  // @EventPattern('checkCustomerValidity')
-  // async checkCustomerValid({
-  //   customerId,
-  //   totalAmount,
-  // }: {
-  //   customerId: number;
-  //   totalAmount: number;
-  // }): Promise<boolean> {
-  //   const customer = await this.customerRepository.findOne({
-  //     where: { id: customerId },
-  //   });
-  //   return customer.balance >= totalAmount;
-  // }
 
   async isCustomerValid(
     customerId: number,

@@ -2,7 +2,6 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CustomerModule } from './customer/customer.module';
-import { SagaModule } from './saga/saga.module';
 
 @Module({
   imports: [
@@ -21,7 +20,6 @@ import { SagaModule } from './saga/saga.module';
       migrationsRun: process.env.TYPEORM_MIGRATION_RUN === 'true',
       migrationsTableName: 'migrations',
     }),
-    SagaModule,
     CustomerModule,
   ],
   controllers: [],
