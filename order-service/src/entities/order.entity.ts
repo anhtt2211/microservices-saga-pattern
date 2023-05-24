@@ -3,8 +3,10 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  OneToMany,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { OrderItemEntity } from './order-item.entity';
 
 @Entity()
 export class OrderEntity {
@@ -16,15 +18,11 @@ export class OrderEntity {
   customerId: number;
 
   @Column()
-  @Index()
-  stockId: number;
+  status: string;
 
   @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
   created_at: Date;
 
-  @Column()
-  totalAmount: number;
-
-  @Column()
-  status: string;
+  @OneToMany(() => OrderItemEntity, (orderItem) => orderItem.order)
+  items: OrderItemEntity[];
 }
