@@ -9,6 +9,8 @@ import {
 } from '@nestjs/common';
 import { ProductService } from './product.service';
 import { ProductEntity } from '../entities';
+import { MessagePattern } from '@nestjs/microservices';
+import { DeepPartial } from 'typeorm';
 
 @Controller('products')
 export class ProductController {
@@ -37,5 +39,19 @@ export class ProductController {
   @Delete(':id')
   async deleteProduct(@Param('id') id: number): Promise<void> {
     return this.productService.deleteProduct(id);
+  }
+
+  @MessagePattern('reserveStock')
+  async reserveStock(payload: {
+    products: DeepPartial<ProductEntity>[];
+  }): Promise<boolean> {
+    return await this.productService.reserveStock(payload);
+  }
+
+  @MessagePattern('stockReserved')
+  async updateInventory(payload: {
+    products: DeepPartial<ProductEntity>[];
+  }): Promise<boolean> {
+    return await this.productService.updateInventory(payload);
   }
 }

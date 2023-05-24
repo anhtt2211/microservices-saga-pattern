@@ -56,7 +56,6 @@ export class CustomerService {
 
   async compensateProcessPayment(payload: {
     customerId: number;
-    orderId: number;
     totalAmount: number;
   }): Promise<boolean> {
     const { customerId, totalAmount } = payload;
@@ -64,10 +63,6 @@ export class CustomerService {
     const customer = await this.customerRepository.findOne({
       where: { id: customerId },
     });
-    if (customer.balance < totalAmount) {
-      Logger.error('Cannot compensate process payment');
-      return false;
-    }
 
     return !!(await this.customerRepository.save({
       ...customer,
@@ -105,19 +100,19 @@ export class CustomerService {
     }
   }
 
-  @EventPattern('checkCustomerValidity')
-  async checkCustomerValid({
-    customerId,
-    totalAmount,
-  }: {
-    customerId: number;
-    totalAmount: number;
-  }): Promise<boolean> {
-    const customer = await this.customerRepository.findOne({
-      where: { id: customerId },
-    });
-    return customer.balance >= totalAmount;
-  }
+  // @EventPattern('checkCustomerValidity')
+  // async checkCustomerValid({
+  //   customerId,
+  //   totalAmount,
+  // }: {
+  //   customerId: number;
+  //   totalAmount: number;
+  // }): Promise<boolean> {
+  //   const customer = await this.customerRepository.findOne({
+  //     where: { id: customerId },
+  //   });
+  //   return customer.balance >= totalAmount;
+  // }
 
   private async getCustomerFromOrder(orderId: number): Promise<number> {
     // Emit a request to the Order service to get the customer ID associated with the order
@@ -128,7 +123,7 @@ export class CustomerService {
     return response;
   }
 
-  private async isCustomerValid(
+  async isCustomerValid(
     customerId: number,
     totalMount: number,
   ): Promise<boolean> {

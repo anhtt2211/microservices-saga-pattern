@@ -47,6 +47,7 @@ export class OrderService {
       this.sagaClient.emit('orderCreated', {
         orderId: orderEntity.id,
         customerId: orderEntity.customerId,
+        products: placeOrderDto.items,
         totalAmount,
         status: OrderStatus.Pending,
       });

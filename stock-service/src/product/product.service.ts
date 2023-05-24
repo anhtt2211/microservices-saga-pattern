@@ -32,6 +32,26 @@ export class ProductService {
     return this.productRepository.save(product);
   }
 
+  async reserveStock(payload: {
+    products: DeepPartial<ProductEntity>[];
+  }): Promise<boolean> {
+    const { products } = payload;
+
+    const ids = products.map((prd) => prd.id);
+    const productEntities = await this.productRepository.find({
+      where: { id: In(ids) },
+    });
+    if (productEntities.length !== products.length) {
+      Logger.error('At least one of product in payload does not match');
+      return false;
+    }
+
+    return productEntities.every(
+      (product, index) =>
+        product.stockQuantity - products[index].stockQuantity >= 0,
+    );
+  }
+
   async updateInventory(payload: {
     products: DeepPartial<ProductEntity>[];
   }): Promise<boolean> {
@@ -54,27 +74,27 @@ export class ProductService {
     return !!(await this.productRepository.save(productsUpdated));
   }
 
-  async compensateUpdateInventory(payload: {
-    products: DeepPartial<ProductEntity>[];
-  }): Promise<boolean> {
-    const { products } = payload;
+  // async compensateUpdateInventory(payload: {
+  //   products: DeepPartial<ProductEntity>[];
+  // }): Promise<boolean> {
+  //   const { products } = payload;
 
-    const ids = products.map((prd) => prd.id);
-    const productEntities = await this.productRepository.find({
-      where: { id: In(ids) },
-    });
-    if (productEntities.length !== products.length) {
-      Logger.error('At least one of product in payload does not match');
-      return false;
-    }
+  //   const ids = products.map((prd) => prd.id);
+  //   const productEntities = await this.productRepository.find({
+  //     where: { id: In(ids) },
+  //   });
+  //   if (productEntities.length !== products.length) {
+  //     Logger.error('At least one of product in payload does not match');
+  //     return false;
+  //   }
 
-    const productsUpdated = productEntities.map((product, index) => ({
-      id: product.id,
-      quantity: product.stockQuantity + products[index].stockQuantity,
-    }));
+  //   const productsUpdated = productEntities.map((product, index) => ({
+  //     id: product.id,
+  //     quantity: product.stockQuantity + products[index].stockQuantity,
+  //   }));
 
-    return !!(await this.productRepository.save(productsUpdated));
-  }
+  //   return !!(await this.productRepository.save(productsUpdated));
+  // }
 
   async deleteProduct(productId: number): Promise<void> {
     await this.productRepository.delete(productId);

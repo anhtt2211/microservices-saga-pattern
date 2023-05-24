@@ -3,6 +3,11 @@
 import { Controller } from '@nestjs/common';
 import { EventPattern, MessagePattern } from '@nestjs/microservices';
 import { SagaCoordinatorService } from './saga-coordinator.service';
+import {
+  IProcessPaymentEvent,
+  ICreateOrderEvent,
+  IUpdateInventoryEvent,
+} from './saga.interface';
 
 @Controller()
 export class SagaCoordinatorController {
@@ -11,33 +16,31 @@ export class SagaCoordinatorController {
   ) {}
 
   @MessagePattern('orderCreated')
-  async handleOrderCreated(payload: {
-    orderId: number;
-    customerId: number;
-    totalAmount: number;
-  }): Promise<void> {
+  async handleOrderCreated(payload: ICreateOrderEvent): Promise<void> {
     await this.sagaCoordinatorService.processOrderCreated(payload);
   }
 
   @EventPattern('customerValidated')
-  async handleCustomerValidated(payload: { orderId: number }): Promise<void> {
-    await this.sagaCoordinatorService.processCustomerValidated(payload.orderId);
+  async handleCustomerValidated(payload: IProcessPaymentEvent): Promise<void> {
+    await this.sagaCoordinatorService.processCustomerValidated(payload);
   }
 
   @EventPattern('customerInvalidated')
-  async handleCustomerInvalidated(payload: { orderId: number }): Promise<void> {
+  async handleCustomerInvalidated(
+    payload: IProcessPaymentEvent,
+  ): Promise<void> {
     await this.sagaCoordinatorService.processCustomerInvalidated(
       payload.orderId,
     );
   }
 
   @EventPattern('stockReserved')
-  async handleStockReserved(payload: { orderId: number }): Promise<void> {
+  async handleStockReserved(payload: IUpdateInventoryEvent): Promise<void> {
     await this.sagaCoordinatorService.processStockReserved(payload.orderId);
   }
 
   @EventPattern('stockNotAvailable')
-  async handleStockNotAvailable(payload: { orderId: number }): Promise<void> {
-    await this.sagaCoordinatorService.processStockNotAvailable(payload.orderId);
+  async handleStockNotAvailable(payload: IUpdateInventoryEvent): Promise<void> {
+    await this.sagaCoordinatorService.processStockNotAvailable(payload);
   }
 }

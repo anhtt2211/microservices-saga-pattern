@@ -23,6 +23,25 @@ export class CustomerController {
     customerId: number;
     totalAmount: number;
   }): Promise<boolean> {
+    return await this.customerService.isCustomerValid(
+      payload.customerId,
+      payload.totalAmount,
+    );
+  }
+
+  @MessagePattern({ cmd: 'customerValidated' })
+  async processPayment(payload: {
+    customerId: number;
+    totalAmount: number;
+  }): Promise<boolean> {
     return await this.customerService.processPayment(payload);
+  }
+
+  @MessagePattern({ cmd: 'refundPayment' })
+  async compensateProcessPayment(payload: {
+    customerId: number;
+    totalAmount: number;
+  }): Promise<boolean> {
+    return await this.customerService.compensateProcessPayment(payload);
   }
 }
