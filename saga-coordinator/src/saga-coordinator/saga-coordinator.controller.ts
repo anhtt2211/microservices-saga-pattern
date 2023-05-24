@@ -15,17 +15,17 @@ export class SagaCoordinatorController {
     private readonly sagaCoordinatorService: SagaCoordinatorService,
   ) {}
 
-  @MessagePattern('orderCreated')
+  @MessagePattern({ cmd: 'orderCreated' })
   async handleOrderCreated(payload: ICreateOrderEvent): Promise<void> {
     await this.sagaCoordinatorService.processOrderCreated(payload);
   }
 
-  @EventPattern('customerValidated')
+  @EventPattern({ cmd: 'customerValidated' })
   async handleCustomerValidated(payload: IProcessPaymentEvent): Promise<void> {
     await this.sagaCoordinatorService.processCustomerValidated(payload);
   }
 
-  @EventPattern('customerInvalidated')
+  @EventPattern({ cmd: 'customerInvalidated' })
   async handleCustomerInvalidated(
     payload: IProcessPaymentEvent,
   ): Promise<void> {
@@ -34,12 +34,12 @@ export class SagaCoordinatorController {
     );
   }
 
-  @EventPattern('stockReserved')
+  @EventPattern({ cmd: 'stockReserved' })
   async handleStockReserved(payload: IUpdateInventoryEvent): Promise<void> {
     await this.sagaCoordinatorService.processStockReserved(payload.orderId);
   }
 
-  @EventPattern('stockNotAvailable')
+  @EventPattern({ cmd: 'stockNotAvailable' })
   async handleStockNotAvailable(payload: IUpdateInventoryEvent): Promise<void> {
     await this.sagaCoordinatorService.processStockNotAvailable(payload);
   }

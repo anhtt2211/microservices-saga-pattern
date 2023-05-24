@@ -21,7 +21,7 @@ async function bootstrap() {
     await app.startAllMicroservices();
 
     await app.listen(4003, () =>
-      Logger.log('Order-Service running on port: ' + 4003, 'Bootstrap'),
+      Logger.log('Customer-Service running on port: ' + 4003, 'Bootstrap'),
     );
   } catch (error) {
     Logger.error('Error during bootstrap:', error);

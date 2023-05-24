@@ -9,12 +9,11 @@ export class CustomerController {
 
   @Post()
   async createCustomer(@Body() createCustomerDto: CreateCustomerDto) {
-    const customerId = await this.customerService.createCustomer(
+    const customer = await this.customerService.createCustomer(
       createCustomerDto,
     );
 
-    // Return the created customer ID
-    return { customerId };
+    return { customer };
   }
 
   @MessagePattern({ cmd: 'checkCustomerValidity' })

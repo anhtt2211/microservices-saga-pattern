@@ -6,6 +6,7 @@ import { OrderEntity } from '../entities';
 import { OrderItemEntity } from '../entities/order-item.entity';
 import { OrderStatus } from './order.enum';
 import { PlaceOrderDto } from './order.interface';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class OrderService {
@@ -44,13 +45,18 @@ export class OrderService {
       );
 
       // // Emit the 'orderCreated' event to continue the saga
-      this.sagaClient.emit('orderCreated', {
-        orderId: orderEntity.id,
-        customerId: orderEntity.customerId,
-        products: placeOrderDto.items,
-        totalAmount,
-        status: OrderStatus.Pending,
-      });
+      await firstValueFrom(
+        this.sagaClient.emit(
+          { cmd: 'orderCreated' },
+          {
+            orderId: orderEntity.id,
+            customerId: orderEntity.customerId,
+            products: placeOrderDto.items,
+            totalAmount,
+            status: OrderStatus.Pending,
+          },
+        ),
+      );
 
       return orderEntity;
     } catch (error) {

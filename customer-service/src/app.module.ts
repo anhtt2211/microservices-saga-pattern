@@ -1,10 +1,8 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
-import { SagaModule } from './saga/saga.module';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CustomerModule } from './customer/customer.module';
+import { SagaModule } from './saga/saga.module';
 
 @Module({
   imports: [
@@ -26,7 +24,7 @@ import { CustomerModule } from './customer/customer.module';
     SagaModule,
     CustomerModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}

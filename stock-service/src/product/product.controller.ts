@@ -16,6 +16,11 @@ import { DeepPartial } from 'typeorm';
 export class ProductController {
   constructor(private readonly productService: ProductService) {}
 
+  @Get('')
+  async getProducts(): Promise<ProductEntity[]> {
+    return this.productService.getProducts();
+  }
+
   @Get(':id')
   async getProductById(@Param('id') id: number): Promise<ProductEntity> {
     return this.productService.getProductById(id);
@@ -41,14 +46,14 @@ export class ProductController {
     return this.productService.deleteProduct(id);
   }
 
-  @MessagePattern('reserveStock')
+  @MessagePattern({ cmd: 'reserveStock' })
   async reserveStock(payload: {
     products: DeepPartial<ProductEntity>[];
   }): Promise<boolean> {
     return await this.productService.reserveStock(payload);
   }
 
-  @MessagePattern('stockReserved')
+  @MessagePattern({ cmd: 'stockReserved' })
   async updateInventory(payload: {
     products: DeepPartial<ProductEntity>[];
   }): Promise<boolean> {

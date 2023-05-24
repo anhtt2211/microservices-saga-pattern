@@ -1,14 +1,14 @@
-import { Controller, Post, Body } from '@nestjs/common';
-import { OrderService } from './order.service';
-import { CreateOrderDto } from './order.interface';
+import { Body, Controller, Post } from '@nestjs/common';
 import { MessagePattern } from '@nestjs/microservices';
+import { PlaceOrderDto } from './order.interface';
+import { OrderService } from './order.service';
 
 @Controller('orders')
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 
   @Post()
-  async createOrder(@Body() createOrderDto: CreateOrderDto) {
+  async createOrder(@Body() createOrderDto: PlaceOrderDto) {
     const orderId = await this.orderService.createOrder(createOrderDto);
 
     // Return the created order ID
@@ -34,12 +34,12 @@ export class OrderController {
   //   await this.orderService.handleCustomerInvalidatedEvent(payload);
   // }
 
-  @MessagePattern('orderConfirmed')
+  @MessagePattern({ cmd: 'orderConfirmed' })
   async handleOrderConfirmedEvent(payload: { orderId: number }): Promise<void> {
     await this.orderService.handleOrderConfirmedEvent(payload);
   }
 
-  @MessagePattern('orderCancelled')
+  @MessagePattern({ cmd: 'orderCancelled' })
   async handleOrderCancelledEvent(payload: { orderId: number }): Promise<void> {
     await this.orderService.handleOrderCancelledEvent(payload);
   }

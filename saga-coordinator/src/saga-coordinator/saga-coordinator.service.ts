@@ -71,15 +71,25 @@ export class SagaCoordinatorService {
     const isCustomerValid = await firstValueFrom(isCustomerValid$);
 
     if (isCustomerValid) {
-      this.customerService.emit('customerValidated', {
-        orderId,
-        products,
-      });
+      await firstValueFrom(
+        this.customerService.emit(
+          { cmd: 'customerValidated' },
+          {
+            orderId,
+            products,
+          },
+        ),
+      );
     } else {
-      this.customerService.emit('customerInvalidated', {
-        orderId,
-        customerId,
-      });
+      await firstValueFrom(
+        this.customerService.emit(
+          { cmd: 'customerInvalidated' },
+          {
+            orderId,
+            customerId,
+          },
+        ),
+      );
     }
   }
 
@@ -91,42 +101,54 @@ export class SagaCoordinatorService {
     // Perform necessary actions for the customerValidated event
     // Example: Reserve the stock for the order
     const isStockReserved = await firstValueFrom(
-      this.stockService.send<boolean>('reserveStock', {
-        products,
-      }),
+      this.stockService.send<boolean>(
+        { cmd: 'reserveStock' },
+        {
+          products,
+        },
+      ),
     );
     if (isStockReserved) {
-      this.stockService.emit('stockReserved', { orderId });
+      this.stockService.emit({ cmd: 'stockReserved' }, { orderId });
     } else {
-      this.stockService.emit('stockNotAvailable', {
-        orderId,
-        customerId,
-        products,
-      });
+      this.stockService.emit(
+        { cmd: 'stockNotAvailable' },
+        {
+          orderId,
+          customerId,
+          products,
+        },
+      );
     }
   }
 
   async processCustomerInvalidated(orderId: number): Promise<void> {
-    this.stockService.emit('orderCancelled', { orderId });
+    this.stockService.emit({ cmd: 'orderCancelled' }, { orderId });
   }
 
   async processStockReserved(orderId: number): Promise<void> {
     // Perform necessary actions for the stockReserved event
     // Example: Confirm the order
-    this.orderService.emit('orderConfirmed', { orderId });
+    this.orderService.emit({ cmd: 'orderConfirmed' }, { orderId });
   }
 
   async processStockNotAvailable({
     orderId,
     customerId,
   }: IUpdateInventoryEvent): Promise<void> {
-    this.customerService.emit('refundPayment', {
-      orderId,
-      customerId,
-    });
+    this.customerService.emit(
+      { cmd: 'refundPayment' },
+      {
+        orderId,
+        customerId,
+      },
+    );
 
-    this.orderService.emit('orderCancelled', {
-      orderId,
-    });
+    this.orderService.emit(
+      { cmd: 'orderCancelled' },
+      {
+        orderId,
+      },
+    );
   }
 }
