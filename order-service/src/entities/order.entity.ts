@@ -1,4 +1,10 @@
-import { Column, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  Index,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity()
 export class OrderEntity {
@@ -13,8 +19,8 @@ export class OrderEntity {
   @Index()
   stockId: number;
 
-  @Column()
-  orderDate: Date;
+  @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  created_at: Date;
 
   @Column()
   totalAmount: number;

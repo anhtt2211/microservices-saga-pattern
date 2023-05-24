@@ -26,4 +26,21 @@ export class OrderController {
 
     return order.customerId;
   }
+
+  @MessagePattern('customerInvalidated')
+  async handleCustomerInvalidatedEvent(payload: {
+    orderId: number;
+  }): Promise<void> {
+    await this.orderService.handleCustomerInvalidatedEvent(payload);
+  }
+
+  @MessagePattern('orderConfirmed')
+  async handleOrderConfirmedEvent(payload: { orderId: number }): Promise<void> {
+    await this.orderService.handleOrderConfirmedEvent(payload);
+  }
+
+  @MessagePattern('orderCancelled')
+  async handleOrderCancelledEvent(payload: { orderId: number }): Promise<void> {
+    await this.orderService.handleOrderCancelledEvent(payload);
+  }
 }

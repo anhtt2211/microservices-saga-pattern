@@ -1,11 +1,10 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ClientProxy, EventPattern } from '@nestjs/microservices';
+import { ClientProxy } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
-import { OrderEntity } from 'src/entities/order.entity';
 import { Repository } from 'typeorm';
-import { CreateOrderDto } from './order.interface';
-import { firstValueFrom } from 'rxjs';
+import { OrderEntity } from '../entities';
 import { OrderStatus } from './order.enum';
+import { CreateOrderDto } from './order.interface';
 
 @Injectable()
 export class OrderService {
@@ -17,27 +16,71 @@ export class OrderService {
     private readonly sagaClient: ClientProxy,
   ) {}
 
-  async createOrder(createOrderDto: CreateOrderDto): Promise<number> {
-    // Create the order in the database
-    const order = await this.orderRepository.save({ ...createOrderDto });
+  async createOrder(createOrderDto: CreateOrderDto): Promise<OrderEntity> {
+    const order = await this.orderRepository.save({
+      ...createOrderDto,
+      status: OrderStatus.Pending,
+    });
 
     // Emit the 'orderCreated' event to continue the saga
-    await firstValueFrom(
-      this.sagaClient.emit('orderCreated', {
-        orderId: order.id,
-        totalAmount: order.totalAmount,
-        status: OrderStatus.Pending,
-      }),
-    );
+    this.sagaClient.emit('orderCreated', {
+      orderId: order.id,
+      customerId: order.customerId,
+      totalAmount: order.totalAmount,
+      status: OrderStatus.Pending,
+    });
 
-    return order.id;
+    return order;
+  }
+
+  async confirmOrder(orderId: number): Promise<boolean> {
+    const order = await this.orderRepository.findOne({
+      where: { id: orderId },
+    });
+    if (!order) {
+      Logger.error(`Order is not exist with orderId: ${orderId}`);
+      return false;
+    }
+
+    if (order.status !== OrderStatus.Pending) {
+      Logger.error(
+        `Order cannot confirm because current status is ${order.status}`,
+      );
+      return false;
+    }
+
+    return !!(await this.orderRepository.save({
+      ...order,
+      status: OrderStatus.Confirm,
+    }));
+  }
+
+  async cancelOrder(orderId: number): Promise<boolean> {
+    const order = await this.orderRepository.findOne({
+      where: { id: orderId },
+    });
+    if (!order) {
+      Logger.error(`Order is not exist with orderId: ${orderId}`);
+      return false;
+    }
+
+    if (order.status !== OrderStatus.Pending) {
+      Logger.error(
+        `Order cannot cancel because current status is ${order.status}`,
+      );
+      return false;
+    }
+
+    return !!(await this.orderRepository.save({
+      ...order,
+      status: OrderStatus.Cancel,
+    }));
   }
 
   async findOne(orderId: number): Promise<OrderEntity> {
     return await this.orderRepository.findOne({ where: { id: orderId } });
   }
 
-  @EventPattern('customerValidated')
   async handleCustomerValidatedEvent(payload: {
     orderId: number;
   }): Promise<void> {
@@ -45,10 +88,10 @@ export class OrderService {
 
     console.log(`Customer validated event received for order ID: ${orderId}`);
 
-    await firstValueFrom(this.sagaClient.emit('orderConfirmed', { orderId }));
+    this.sagaClient.emit('orderConfirmed', { orderId });
   }
 
-  @EventPattern('customerInvalidated')
+  // @EventPattern('customerInvalidated')
   async handleCustomerInvalidatedEvent(payload: {
     orderId: number;
   }): Promise<void> {
@@ -56,10 +99,9 @@ export class OrderService {
 
     console.log(`Customer invalidated event received for order ID: ${orderId}`);
 
-    await firstValueFrom(this.sagaClient.emit('orderCancelled', { orderId }));
+    this.sagaClient.emit('orderCancelled', { orderId });
   }
 
-  @EventPattern('orderConfirmed')
   async handleOrderConfirmedEvent(payload: { orderId: number }): Promise<void> {
     const { orderId } = payload;
     const order = await this.orderRepository.findOne({
@@ -78,7 +120,6 @@ export class OrderService {
     });
   }
 
-  @EventPattern('orderCancelled')
   async handleOrderCancelledEvent(payload: { orderId: number }): Promise<void> {
     const { orderId } = payload;
     const order = await this.orderRepository.findOne({
