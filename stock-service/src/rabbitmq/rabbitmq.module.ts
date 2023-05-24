@@ -5,11 +5,11 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
   imports: [
     ClientsModule.register([
       {
-        name: 'SAGA_CLIENT',
+        name: 'stockClient',
         transport: Transport.RMQ,
         options: {
           urls: ['amqp://localhost'],
-          queue: 'queue-saga',
+          queue: 'stock-queue',
           queueOptions: {
             durable: true,
           },
@@ -19,4 +19,4 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
   ],
   exports: [ClientsModule],
 })
-export class SagaModule {}
+export class RabbitMq {}
