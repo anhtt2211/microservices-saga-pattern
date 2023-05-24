@@ -1,7 +1,7 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductEntity } from 'src/entities';
-import { In, Repository } from 'typeorm';
+import { DeepPartial, In, Repository } from 'typeorm';
 
 @Injectable()
 export class ProductService {
@@ -32,8 +32,48 @@ export class ProductService {
     return this.productRepository.save(product);
   }
 
-  async checkProductAvailability(ids: number[]): Promise<boolean> {
-    return true;
+  async updateInventory(payload: {
+    products: DeepPartial<ProductEntity>[];
+  }): Promise<boolean> {
+    const { products } = payload;
+
+    const ids = products.map((prd) => prd.id);
+    const productEntities = await this.productRepository.find({
+      where: { id: In(ids) },
+    });
+    if (productEntities.length !== products.length) {
+      Logger.error('At least one of product in payload does not match');
+      return false;
+    }
+
+    const productsUpdated = productEntities.map((product, index) => ({
+      id: product.id,
+      quantity: product.stockQuantity - products[index].stockQuantity,
+    }));
+
+    return !!(await this.productRepository.save(productsUpdated));
+  }
+
+  async compensateUpdateInventory(payload: {
+    products: DeepPartial<ProductEntity>[];
+  }): Promise<boolean> {
+    const { products } = payload;
+
+    const ids = products.map((prd) => prd.id);
+    const productEntities = await this.productRepository.find({
+      where: { id: In(ids) },
+    });
+    if (productEntities.length !== products.length) {
+      Logger.error('At least one of product in payload does not match');
+      return false;
+    }
+
+    const productsUpdated = productEntities.map((product, index) => ({
+      id: product.id,
+      quantity: product.stockQuantity + products[index].stockQuantity,
+    }));
+
+    return !!(await this.productRepository.save(productsUpdated));
   }
 
   async deleteProduct(productId: number): Promise<void> {
