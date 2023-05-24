@@ -29,6 +29,7 @@
     "@nestjs/typeorm": "^9.0.1",
     "amqp-connection-manager": "^4.1.13",
     "amqplib": "^0.10.3",
+    "class-validator": "^0.14.0",
     "pg": "^8.11.0",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",

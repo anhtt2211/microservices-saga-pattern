@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   ClientProxy,
   ClientProxyFactory,
@@ -9,6 +9,7 @@ import {
   IProcessPaymentEvent,
   ICreateOrderEvent,
   IUpdateInventoryEvent,
+  PlaceOrderDto,
 } from './saga.interface';
 
 @Injectable()
@@ -22,10 +23,10 @@ export class SagaCoordinatorService {
     this.orderService = ClientProxyFactory.create({
       transport: Transport.RMQ,
       options: {
-        urls: ['amqp://localhost:5672'],
+        urls: ['amqp://localhost'],
         queue: 'order-queue',
         queueOptions: {
-          durable: false,
+          durable: true,
         },
       },
     });
@@ -33,10 +34,10 @@ export class SagaCoordinatorService {
     this.customerService = ClientProxyFactory.create({
       transport: Transport.RMQ,
       options: {
-        urls: ['amqp://localhost:5672'],
-        queue: 'queue-saga',
+        urls: ['amqp://localhost'],
+        queue: 'customer-queue',
         queueOptions: {
-          durable: false,
+          durable: true,
         },
       },
     });
@@ -44,13 +45,24 @@ export class SagaCoordinatorService {
     this.stockService = ClientProxyFactory.create({
       transport: Transport.RMQ,
       options: {
-        urls: ['amqp://localhost:5672'],
-        queue: 'queue-saga',
+        urls: ['amqp://localhost'],
+        queue: 'stock-queue',
         queueOptions: {
-          durable: false,
+          durable: true,
         },
       },
     });
+  }
+
+  async handleCreateOrder(placeOrderDto: PlaceOrderDto) {
+    const order = await firstValueFrom(
+      this.orderService.send({ cmd: 'createOrder' }, placeOrderDto),
+    );
+    if (order) {
+      this.orderService.emit({ cmd: 'orderCreated' }, order);
+    }
+
+    return order;
   }
 
   async processOrderCreated({
@@ -76,6 +88,8 @@ export class SagaCoordinatorService {
           { cmd: 'customerValidated' },
           {
             orderId,
+            customerId,
+            totalAmount,
             products,
           },
         ),
@@ -97,33 +111,49 @@ export class SagaCoordinatorService {
     orderId,
     customerId,
     products,
+    totalAmount,
   }: IProcessPaymentEvent): Promise<void> {
-    // Perform necessary actions for the customerValidated event
     // Example: Reserve the stock for the order
-    const isStockReserved = await firstValueFrom(
-      this.stockService.send<boolean>(
-        { cmd: 'reserveStock' },
+
+    const isProcessPayment = await firstValueFrom(
+      this.customerService.send<boolean>(
+        { cmd: 'customerValidated' },
         {
-          products,
+          customerId,
+          totalAmount,
         },
       ),
     );
-    if (isStockReserved) {
-      this.stockService.emit({ cmd: 'stockReserved' }, { orderId });
-    } else {
-      this.stockService.emit(
-        { cmd: 'stockNotAvailable' },
-        {
-          orderId,
-          customerId,
-          products,
-        },
+    if (isProcessPayment) {
+      const isStockReserved = await firstValueFrom(
+        this.stockService.send<boolean>(
+          { cmd: 'reserveStock' },
+          {
+            products,
+          },
+        ),
       );
+      if (isStockReserved) {
+        Logger.log('Start update inventory');
+        this.stockService.send({ cmd: 'stockReserved' }, { orderId });
+
+        this.stockService.emit({ cmd: 'stockReserved' }, { orderId });
+      } else {
+        Logger.error('Stock cannot reserve');
+        this.stockService.emit(
+          { cmd: 'stockNotAvailable' },
+          {
+            orderId,
+            customerId,
+            products,
+          },
+        );
+      }
     }
   }
 
   async processCustomerInvalidated(orderId: number): Promise<void> {
-    this.stockService.emit({ cmd: 'orderCancelled' }, { orderId });
+    this.orderService.emit({ cmd: 'orderCancelled' }, { orderId });
   }
 
   async processStockReserved(orderId: number): Promise<void> {
@@ -135,15 +165,18 @@ export class SagaCoordinatorService {
   async processStockNotAvailable({
     orderId,
     customerId,
+    totalAmount,
   }: IUpdateInventoryEvent): Promise<void> {
+    Logger.error('Refund payment');
     this.customerService.emit(
       { cmd: 'refundPayment' },
       {
-        orderId,
         customerId,
+        totalAmount,
       },
     );
 
+    Logger.error('Cancel order');
     this.orderService.emit(
       { cmd: 'orderCancelled' },
       {
