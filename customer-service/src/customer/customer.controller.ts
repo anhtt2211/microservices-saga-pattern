@@ -23,13 +23,6 @@ export class CustomerController {
     customerId: number;
     totalAmount: number;
   }): Promise<boolean> {
-    const { orderId, customerId, totalAmount } = payload;
-
-    const customer = await this.customerService.findOne(customerId);
-    if (!customer) {
-      Logger.error('Customer is not exist');
-      return false;
-    }
-    return customer.balance >= totalAmount;
+    return await this.customerService.processPayment(payload);
   }
 }
