@@ -4,8 +4,8 @@ import { Controller } from '@nestjs/common';
 import { EventPattern, MessagePattern } from '@nestjs/microservices';
 import { SagaCoordinatorService } from './saga-coordinator.service';
 import {
-  IProcessPaymentEvent,
   ICreateOrderEvent,
+  IProcessPaymentEvent,
   IUpdateInventoryEvent,
 } from './saga.interface';
 

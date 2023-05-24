@@ -23,9 +23,9 @@ export class SagaCoordinatorService {
       transport: Transport.RMQ,
       options: {
         urls: ['amqp://localhost:5672'],
-        queue: 'queue-saga',
+        queue: 'order-queue',
         queueOptions: {
-          durable: true,
+          durable: false,
         },
       },
     });
@@ -36,7 +36,7 @@ export class SagaCoordinatorService {
         urls: ['amqp://localhost:5672'],
         queue: 'queue-saga',
         queueOptions: {
-          durable: true,
+          durable: false,
         },
       },
     });
@@ -47,7 +47,7 @@ export class SagaCoordinatorService {
         urls: ['amqp://localhost:5672'],
         queue: 'queue-saga',
         queueOptions: {
-          durable: true,
+          durable: false,
         },
       },
     });
@@ -68,7 +68,7 @@ export class SagaCoordinatorService {
         totalAmount,
       },
     );
-    const isCustomerValid = await firstValueFrom(isCustomerValid$);
+    const isCustomerValid = await firstValueFrom(isCustomerValid$); // BUG here
 
     if (isCustomerValid) {
       await firstValueFrom(
