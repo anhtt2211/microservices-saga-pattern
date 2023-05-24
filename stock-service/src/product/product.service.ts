@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ProductEntity } from 'src/entities';
 import { DeepPartial, In, Repository } from 'typeorm';
+import { OrderItemDto } from './product.interface';
 
 @Injectable()
 export class ProductService {
@@ -36,12 +37,10 @@ export class ProductService {
     return this.productRepository.save(product);
   }
 
-  async reserveStock(payload: {
-    products: DeepPartial<ProductEntity>[];
-  }): Promise<boolean> {
+  async reserveStock(payload: { products: OrderItemDto[] }): Promise<boolean> {
     const { products } = payload;
 
-    const ids = products.map((prd) => prd.id);
+    const ids = products.map((prd) => prd.productId);
     const productEntities = await this.productRepository.find({
       where: { id: In(ids) },
     });
@@ -51,17 +50,16 @@ export class ProductService {
     }
 
     return productEntities.every(
-      (product, index) =>
-        product.stockQuantity - products[index].stockQuantity >= 0,
+      (product, index) => product.stockQuantity - products[index].quantity >= 0,
     );
   }
 
   async updateInventory(payload: {
-    products: DeepPartial<ProductEntity>[];
+    products: OrderItemDto[];
   }): Promise<boolean> {
     const { products } = payload;
 
-    const ids = products.map((prd) => prd.id);
+    const ids = products.map((prd) => prd.productId);
     const productEntities = await this.productRepository.find({
       where: { id: In(ids) },
     });
@@ -70,35 +68,15 @@ export class ProductService {
       return false;
     }
 
-    const productsUpdated = productEntities.map((product, index) => ({
-      id: product.id,
-      quantity: product.stockQuantity - products[index].stockQuantity,
-    }));
+    const productsUpdated: DeepPartial<ProductEntity>[] = productEntities.map(
+      (product, index) => ({
+        id: product.id,
+        stockQuantity: product.stockQuantity - products[index].quantity,
+      }),
+    );
 
     return !!(await this.productRepository.save(productsUpdated));
   }
-
-  // async compensateUpdateInventory(payload: {
-  //   products: DeepPartial<ProductEntity>[];
-  // }): Promise<boolean> {
-  //   const { products } = payload;
-
-  //   const ids = products.map((prd) => prd.id);
-  //   const productEntities = await this.productRepository.find({
-  //     where: { id: In(ids) },
-  //   });
-  //   if (productEntities.length !== products.length) {
-  //     Logger.error('At least one of product in payload does not match');
-  //     return false;
-  //   }
-
-  //   const productsUpdated = productEntities.map((product, index) => ({
-  //     id: product.id,
-  //     quantity: product.stockQuantity + products[index].stockQuantity,
-  //   }));
-
-  //   return !!(await this.productRepository.save(productsUpdated));
-  // }
 
   async deleteProduct(productId: number): Promise<void> {
     await this.productRepository.delete(productId);
