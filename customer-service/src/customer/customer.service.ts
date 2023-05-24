@@ -58,6 +58,7 @@ export class CustomerService {
 
     const customer = await this.customerRepository.findOne({
       where: { id: customerId },
+      select: ['balance'],
     });
 
     return !!(await this.customerRepository.save({
@@ -72,6 +73,7 @@ export class CustomerService {
   ): Promise<boolean> {
     const customer = await this.customerRepository.findOne({
       where: { id: customerId },
+      select: ['balance'],
     });
     return customer.balance >= totalMount;
   }

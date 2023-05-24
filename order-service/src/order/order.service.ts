@@ -20,16 +20,17 @@ export class OrderService {
     private readonly sagaClient: ClientProxy,
   ) {}
 
-  async createOrder(
-    placeOrderDto: PlaceOrderDto,
-  ): Promise<DeepPartial<OrderEntity>> {
+  async createOrder(placeOrderDto: PlaceOrderDto) {
     try {
-      const orderEntity: DeepPartial<OrderEntity> = {
-        ...placeOrderDto,
-        status: OrderStatus.Pending,
-      };
-
-      await this.orderRepository.save(orderEntity);
+      const orderEntity = await this.orderRepository.save(
+        {
+          ...placeOrderDto,
+          status: OrderStatus.Pending,
+        },
+        {
+          transaction: false,
+        },
+      );
       await this.orderItemRepository.save(
         placeOrderDto.items.map((orderItem) => ({
           ...orderItem,
@@ -37,6 +38,9 @@ export class OrderService {
             id: orderEntity.id,
           },
         })),
+        {
+          transaction: false,
+        },
       );
 
       const totalAmount = placeOrderDto.items.reduce(
@@ -44,21 +48,12 @@ export class OrderService {
         0,
       );
 
-      // // Emit the 'orderCreated' event to continue the saga
-      await firstValueFrom(
-        this.sagaClient.emit(
-          { cmd: 'orderCreated' },
-          {
-            orderId: orderEntity.id,
-            customerId: orderEntity.customerId,
-            products: placeOrderDto.items,
-            totalAmount,
-            status: OrderStatus.Pending,
-          },
-        ),
-      );
-
-      return orderEntity;
+      return {
+        orderId: orderEntity.id,
+        customerId: orderEntity.customerId,
+        products: placeOrderDto.items,
+        totalAmount,
+      };
     } catch (error) {
       throw new Error(error);
     }
@@ -112,27 +107,6 @@ export class OrderService {
     return await this.orderRepository.findOne({ where: { id: orderId } });
   }
 
-  // async handleCustomerValidatedEvent(payload: {
-  //   orderId: number;
-  // }): Promise<void> {
-  //   const { orderId } = payload;
-
-  //   console.log(`Customer validated event received for order ID: ${orderId}`);
-
-  //   this.sagaClient.emit('orderConfirmed', { orderId });
-  // }
-
-  // @EventPattern('customerInvalidated')
-  // async handleCustomerInvalidatedEvent(payload: {
-  //   orderId: number;
-  // }): Promise<void> {
-  //   const { orderId } = payload;
-
-  //   console.log(`Customer invalidated event received for order ID: ${orderId}`);
-
-  //   this.sagaClient.emit('orderCancelled', { orderId });
-  // }
-
   async handleOrderConfirmedEvent(payload: { orderId: number }): Promise<void> {
     const { orderId } = payload;
     const order = await this.orderRepository.findOne({
@@ -162,7 +136,7 @@ export class OrderService {
       return;
     }
 
-    Logger.log(`Order cancelled event received for order ID: ${orderId}`);
+    Logger.error(`Order cancelled event received for order ID: ${orderId}`);
     await this.orderRepository.save({
       ...order,
       status: OrderStatus.Cancel,
