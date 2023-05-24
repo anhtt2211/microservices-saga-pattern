@@ -5,7 +5,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
   imports: [
     ClientsModule.register([
       {
-        name: 'RABBITMQ',
+        name: 'orderClient',
         transport: Transport.RMQ,
         options: {
           urls: ['amqp://localhost'],
