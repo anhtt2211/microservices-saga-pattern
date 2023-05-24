@@ -16,7 +16,7 @@ export class OrderService {
     @InjectRepository(OrderItemEntity)
     private readonly orderItemRepository: Repository<OrderItemEntity>,
 
-    @Inject('SAGA_CLIENT')
+    @Inject('RABBITMQ')
     private readonly sagaClient: ClientProxy,
   ) {}
 
