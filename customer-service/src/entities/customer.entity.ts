@@ -6,16 +6,7 @@ export class CustomerEntity {
   id: number;
 
   @Column()
-  firstName: string;
-
-  @Column()
-  lastName: string;
-
-  @Column()
-  email: string;
-
-  @Column()
-  address: string;
+  fullName: string;
 
   @Column({ default: 0 })
   balance: number;

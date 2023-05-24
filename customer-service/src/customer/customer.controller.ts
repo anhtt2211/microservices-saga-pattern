@@ -1,6 +1,7 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, Logger } from '@nestjs/common';
 import { CustomerService } from './customer.service';
 import { CreateCustomerDto } from './customer.interface';
+import { MessagePattern } from '@nestjs/microservices';
 
 @Controller('customers')
 export class CustomerController {
@@ -14,5 +15,21 @@ export class CustomerController {
 
     // Return the created customer ID
     return { customerId };
+  }
+
+  @MessagePattern({ cmd: 'checkCustomerValidity' })
+  async handleCheckCustomerValidity(payload: {
+    orderId: number;
+    customerId: number;
+    totalAmount: number;
+  }): Promise<boolean> {
+    const { orderId, customerId, totalAmount } = payload;
+
+    const customer = await this.customerService.findOne(customerId);
+    if (!customer) {
+      Logger.error('Customer is not exist');
+      return false;
+    }
+    return customer.balance >= totalAmount;
   }
 }

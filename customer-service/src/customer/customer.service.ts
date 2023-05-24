@@ -16,6 +16,10 @@ export class CustomerService {
     private readonly sagaClient: ClientProxy,
   ) {}
 
+  async findOne(id: number): Promise<CustomerEntity> {
+    return await this.customerRepository.findOne({ where: { id } });
+  }
+
   async createCustomer(createCustomerDto: CreateCustomerDto): Promise<number> {
     // Create the customer in the database
     const customer = await this.customerRepository.save({
@@ -28,6 +32,47 @@ export class CustomerService {
     );
 
     return customer.id;
+  }
+
+  async processPayment(payload: {
+    customerId: number;
+    totalAmount: number;
+  }): Promise<boolean> {
+    const { customerId, totalAmount } = payload;
+
+    const customer = await this.customerRepository.findOne({
+      where: { id: customerId },
+    });
+    if (customer.balance < totalAmount) {
+      Logger.error('Cannot process payment');
+      return false;
+    }
+
+    return !!(await this.customerRepository.save({
+      ...customer,
+      balance: customer.balance - totalAmount,
+    }));
+  }
+
+  async compensateProcessPayment(payload: {
+    customerId: number;
+    orderId: number;
+    totalAmount: number;
+  }): Promise<boolean> {
+    const { customerId, totalAmount } = payload;
+
+    const customer = await this.customerRepository.findOne({
+      where: { id: customerId },
+    });
+    if (customer.balance < totalAmount) {
+      Logger.error('Cannot compensate process payment');
+      return false;
+    }
+
+    return !!(await this.customerRepository.save({
+      ...customer,
+      balance: customer.balance + totalAmount,
+    }));
   }
 
   @EventPattern('orderCreated')
@@ -58,6 +103,20 @@ export class CustomerService {
         this.sagaClient.emit('customerInvalidated', { orderId }),
       );
     }
+  }
+
+  @EventPattern('checkCustomerValidity')
+  async checkCustomerValid({
+    customerId,
+    totalAmount,
+  }: {
+    customerId: number;
+    totalAmount: number;
+  }): Promise<boolean> {
+    const customer = await this.customerRepository.findOne({
+      where: { id: customerId },
+    });
+    return customer.balance >= totalAmount;
   }
 
   private async getCustomerFromOrder(orderId: number): Promise<number> {
