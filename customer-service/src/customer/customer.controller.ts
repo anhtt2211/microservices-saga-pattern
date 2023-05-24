@@ -1,7 +1,7 @@
-import { Controller, Post, Body, Logger } from '@nestjs/common';
-import { CustomerService } from './customer.service';
+import { Body, Controller, Post } from '@nestjs/common';
+import { MessagePattern, Transport } from '@nestjs/microservices';
 import { CreateCustomerDto } from './customer.interface';
-import { MessagePattern } from '@nestjs/microservices';
+import { CustomerService } from './customer.service';
 
 @Controller('customers')
 export class CustomerController {
@@ -16,7 +16,7 @@ export class CustomerController {
     return { customer };
   }
 
-  @MessagePattern({ cmd: 'checkCustomerValidity' })
+  @MessagePattern({ cmd: 'checkCustomerValidity' }, Transport.RMQ)
   async handleCheckCustomerValidity(payload: {
     orderId: number;
     customerId: number;
@@ -28,7 +28,7 @@ export class CustomerController {
     );
   }
 
-  @MessagePattern({ cmd: 'customerValidated' })
+  @MessagePattern({ cmd: 'customerValidated' }, Transport.RMQ)
   async processPayment(payload: {
     customerId: number;
     totalAmount: number;
@@ -36,7 +36,7 @@ export class CustomerController {
     return await this.customerService.processPayment(payload);
   }
 
-  @MessagePattern({ cmd: 'refundPayment' })
+  @MessagePattern({ cmd: 'refundPayment' }, Transport.RMQ)
   async compensateProcessPayment(payload: {
     customerId: number;
     totalAmount: number;

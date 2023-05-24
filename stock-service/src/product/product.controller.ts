@@ -1,16 +1,16 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
   Put,
-  Delete,
 } from '@nestjs/common';
-import { ProductService } from './product.service';
+import { MessagePattern, Transport } from '@nestjs/microservices';
 import { ProductEntity } from '../entities';
-import { MessagePattern } from '@nestjs/microservices';
-import { DeepPartial } from 'typeorm';
+import { OrderItemDto } from './product.interface';
+import { ProductService } from './product.service';
 
 @Controller('products')
 export class ProductController {
@@ -46,16 +46,15 @@ export class ProductController {
     return this.productService.deleteProduct(id);
   }
 
-  @MessagePattern({ cmd: 'reserveStock' })
-  async reserveStock(payload: {
-    products: DeepPartial<ProductEntity>[];
-  }): Promise<boolean> {
+  @MessagePattern({ cmd: 'reserveStock' }, Transport.RMQ)
+  async reserveStock(payload: { products: OrderItemDto[] }): Promise<boolean> {
     return await this.productService.reserveStock(payload);
+    // return await this.productService.updateInventory(payload);
   }
 
-  @MessagePattern({ cmd: 'stockReserved' })
+  @MessagePattern({ cmd: 'stockReserved' }, Transport.RMQ)
   async updateInventory(payload: {
-    products: DeepPartial<ProductEntity>[];
+    products: OrderItemDto[];
   }): Promise<boolean> {
     return await this.productService.updateInventory(payload);
   }
