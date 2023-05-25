@@ -1,68 +1,41 @@
-import { Injectable, Logger } from '@nestjs/common';
-import {
-  ClientProxy,
-  ClientProxyFactory,
-  Transport,
-} from '@nestjs/microservices';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 import { firstValueFrom } from 'rxjs';
 import {
-  IProcessPaymentEvent,
   ICreateOrderEvent,
+  IProcessPaymentEvent,
   IUpdateInventoryEvent,
   PlaceOrderDto,
 } from './saga.interface';
+import { v4 } from 'uuid';
 
 @Injectable()
 export class SagaCoordinatorService {
-  private readonly orderService: ClientProxy;
-  private readonly customerService: ClientProxy;
-  private readonly stockService: ClientProxy;
+  constructor(
+    @Inject('orderService')
+    private readonly orderService: ClientProxy,
 
-  constructor() {
-    // Initialize the client proxies for communication with other services
-    this.orderService = ClientProxyFactory.create({
-      transport: Transport.RMQ,
-      options: {
-        urls: ['amqp://localhost'],
-        queue: 'order-queue',
-        queueOptions: {
-          durable: true,
-        },
-      },
-    });
+    @Inject('customerService')
+    private readonly customerService: ClientProxy,
 
-    this.customerService = ClientProxyFactory.create({
-      transport: Transport.RMQ,
-      options: {
-        urls: ['amqp://localhost'],
-        queue: 'customer-queue',
-        queueOptions: {
-          durable: true,
-        },
-      },
-    });
-
-    this.stockService = ClientProxyFactory.create({
-      transport: Transport.RMQ,
-      options: {
-        urls: ['amqp://localhost'],
-        queue: 'stock-queue',
-        queueOptions: {
-          durable: true,
-        },
-      },
-    });
-  }
+    @Inject('stockService')
+    private readonly stockService: ClientProxy,
+  ) {}
 
   async handleCreateOrder(placeOrderDto: PlaceOrderDto) {
-    const order = await firstValueFrom(
-      this.orderService.send({ cmd: 'createOrder' }, placeOrderDto),
-    );
-    if (order) {
-      this.orderService.emit({ cmd: 'orderCreated' }, order);
-    }
+    try {
+      const order = await firstValueFrom(
+        this.orderService.send({ cmd: 'createOrder' }, { ...placeOrderDto }),
+      );
+      if (order) {
+        this.orderService.emit({ cmd: 'orderCreated' }, order);
+      }
 
-    return order;
+      return order;
+    } catch (error) {
+      Logger.error('handleCreateOrder:error');
+      Logger.error(error);
+    }
   }
 
   async processOrderCreated({
@@ -71,39 +44,28 @@ export class SagaCoordinatorService {
     products,
     totalAmount,
   }: ICreateOrderEvent): Promise<void> {
-    // Perform necessary actions for the orderCreated event
-    // Example: Start the saga workflow by checking customer validity
-    const isCustomerValid$ = this.customerService.send<boolean>(
-      { cmd: 'checkCustomerValidity' },
-      {
-        customerId,
-        totalAmount,
-      },
-    );
-    const isCustomerValid = await firstValueFrom(isCustomerValid$); // BUG here
-
-    if (isCustomerValid) {
-      await firstValueFrom(
-        this.customerService.emit(
-          { cmd: 'customerValidated' },
+    try {
+      const isPay = await firstValueFrom(
+        this.customerService.send<boolean>(
+          { cmd: 'processPayment' },
           {
-            orderId,
             customerId,
             totalAmount,
-            products,
           },
         ),
       );
-    } else {
-      await firstValueFrom(
+
+      if (isPay) {
         this.customerService.emit(
-          { cmd: 'customerInvalidated' },
-          {
-            orderId,
-            customerId,
-          },
-        ),
-      );
+          { cmd: 'customerValidated' },
+          { orderId, customerId, products, totalAmount },
+        );
+      } else {
+        this.customerService.emit({ cmd: 'customerInvalidated' }, { orderId });
+      }
+    } catch (error) {
+      Logger.error('processOrderCreated:error');
+      Logger.error(error);
     }
   }
 
@@ -113,19 +75,8 @@ export class SagaCoordinatorService {
     products,
     totalAmount,
   }: IProcessPaymentEvent): Promise<void> {
-    // Example: Reserve the stock for the order
-
-    const isProcessPayment = await firstValueFrom(
-      this.customerService.send<boolean>(
-        { cmd: 'customerValidated' },
-        {
-          customerId,
-          totalAmount,
-        },
-      ),
-    );
-    if (isProcessPayment) {
-      const isStockReserved = await firstValueFrom(
+    try {
+      const isReserveStock = await firstValueFrom(
         this.stockService.send<boolean>(
           { cmd: 'reserveStock' },
           {
@@ -133,33 +84,48 @@ export class SagaCoordinatorService {
           },
         ),
       );
-      if (isStockReserved) {
-        Logger.log('Start update inventory');
-        this.stockService.send({ cmd: 'stockReserved' }, { orderId });
-
-        this.stockService.emit({ cmd: 'stockReserved' }, { orderId });
+      if (isReserveStock) {
+        this.stockService.emit({ cmd: 'stockReserved' }, { orderId, products });
       } else {
-        Logger.error('Stock cannot reserve');
         this.stockService.emit(
           { cmd: 'stockNotAvailable' },
           {
             orderId,
             customerId,
             products,
+            totalAmount,
           },
         );
       }
+    } catch (error) {
+      Logger.error('processCustomerValidated:error');
+      Logger.error(error);
     }
   }
 
   async processCustomerInvalidated(orderId: number): Promise<void> {
+    Logger.verbose('processCustomerInvalidated');
     this.orderService.emit({ cmd: 'orderCancelled' }, { orderId });
   }
 
-  async processStockReserved(orderId: number): Promise<void> {
-    // Perform necessary actions for the stockReserved event
-    // Example: Confirm the order
-    this.orderService.emit({ cmd: 'orderConfirmed' }, { orderId });
+  async processStockReserved({
+    orderId,
+    products,
+  }: IUpdateInventoryEvent): Promise<void> {
+    try {
+      const isStockReserve = await firstValueFrom(
+        this.stockService.send<boolean>(
+          { cmd: 'updateInventory' },
+          { products },
+        ),
+      );
+      if (isStockReserve) {
+        this.orderService.emit({ cmd: 'orderConfirmed' }, { orderId });
+      }
+    } catch (error) {
+      Logger.error('processStockReserved:error');
+      Logger.error(error);
+    }
   }
 
   async processStockNotAvailable({
@@ -167,7 +133,6 @@ export class SagaCoordinatorService {
     customerId,
     totalAmount,
   }: IUpdateInventoryEvent): Promise<void> {
-    Logger.error('Refund payment');
     this.customerService.emit(
       { cmd: 'refundPayment' },
       {
@@ -176,7 +141,6 @@ export class SagaCoordinatorService {
       },
     );
 
-    Logger.error('Cancel order');
     this.orderService.emit(
       { cmd: 'orderCancelled' },
       {
