@@ -49,10 +49,9 @@ export class ProductController {
   @MessagePattern({ cmd: 'reserveStock' }, Transport.RMQ)
   async reserveStock(payload: { products: OrderItemDto[] }): Promise<boolean> {
     return await this.productService.reserveStock(payload);
-    // return await this.productService.updateInventory(payload);
   }
 
-  @MessagePattern({ cmd: 'stockReserved' }, Transport.RMQ)
+  @MessagePattern({ cmd: 'updateInventory' }, Transport.RMQ)
   async updateInventory(payload: {
     products: OrderItemDto[];
   }): Promise<boolean> {

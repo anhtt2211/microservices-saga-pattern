@@ -1,58 +1,67 @@
 // main.ts
 
+import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { Transport } from '@nestjs/microservices';
 import { AppModule } from './app.module';
-import { Logger } from '@nestjs/common';
 
 async function bootstrap() {
   try {
-    const app = await NestFactory.create(AppModule);
+    const app = await NestFactory.create(AppModule, { snapshot: true });
 
     // connect to order-service
-    app.connectMicroservice({
-      transport: Transport.RMQ,
-      options: {
-        urls: ['amqp://localhost'],
-        queue: 'order-queue',
-        queueOptions: {
-          durable: true,
-        },
-        connectionOptions: {
-          timeout: 10000,
+    app.connectMicroservice(
+      {
+        transport: Transport.RMQ,
+        options: {
+          urls: ['amqp://localhost'],
+          queue: 'order-queue',
+          queueOptions: {
+            durable: true,
+          },
+          connectionOptions: {
+            timeout: 10000,
+          },
         },
       },
-    });
+      { inheritAppConfig: true },
+    );
 
     // connect to customer-service
-    app.connectMicroservice({
-      transport: Transport.RMQ,
-      options: {
-        urls: ['amqp://localhost'],
-        queue: 'customer-queue',
-        queueOptions: {
-          durable: true,
-        },
-        connectionOptions: {
-          timeout: 10000,
+    app.connectMicroservice(
+      {
+        transport: Transport.RMQ,
+        options: {
+          urls: ['amqp://localhost'],
+          queue: 'customer-queue',
+          queueOptions: {
+            durable: true,
+          },
+          connectionOptions: {
+            timeout: 10000,
+          },
         },
       },
-    });
+      { inheritAppConfig: true },
+    );
 
     // connect to stock-service
-    app.connectMicroservice({
-      transport: Transport.RMQ,
-      options: {
-        urls: ['amqp://localhost'],
-        queue: 'stock-queue',
-        queueOptions: {
-          durable: true,
-        },
-        connectionOptions: {
-          timeout: 10000,
+    app.connectMicroservice(
+      {
+        transport: Transport.RMQ,
+        options: {
+          urls: ['amqp://localhost'],
+          queue: 'stock-queue',
+          queueOptions: {
+            durable: true,
+          },
+          connectionOptions: {
+            timeout: 10000,
+          },
         },
       },
-    });
+      { inheritAppConfig: true },
+    );
 
     await app.startAllMicroservices();
     await app.listen(4000, () =>

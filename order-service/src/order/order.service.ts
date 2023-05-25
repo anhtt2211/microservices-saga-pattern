@@ -15,9 +15,6 @@ export class OrderService {
     private readonly orderRepository: Repository<OrderEntity>,
     @InjectRepository(OrderItemEntity)
     private readonly orderItemRepository: Repository<OrderItemEntity>,
-
-    @Inject('orderClient')
-    private readonly sagaClient: ClientProxy,
   ) {}
 
   async createOrder(placeOrderDto: PlaceOrderDto) {

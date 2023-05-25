@@ -44,6 +44,7 @@ export class CustomerService {
       return false;
     }
 
+    Logger.log('Start process payment');
     return !!(await this.customerRepository.save({
       ...customer,
       balance: customer.balance - totalAmount,
@@ -58,11 +59,12 @@ export class CustomerService {
 
     const customer = await this.customerRepository.findOne({
       where: { id: customerId },
-      select: ['balance'],
+      select: ['id', 'balance'],
     });
 
+    Logger.log('Start compensation process payment');
     return !!(await this.customerRepository.save({
-      ...customer,
+      id: customer.id,
       balance: customer.balance + totalAmount,
     }));
   }
