@@ -8,7 +8,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         name: 'customerClient',
         transport: Transport.RMQ,
         options: {
-          urls: ['amqp://localhost'],
+          urls: ['amqp://localhost', 'amqp://guest:guest@rabbitmq:5672'],
           queue: 'customer-queue',
           queueOptions: {
             durable: true,

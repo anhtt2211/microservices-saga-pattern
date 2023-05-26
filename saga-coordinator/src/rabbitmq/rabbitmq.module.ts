@@ -3,48 +3,13 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
-    // ClientsModule.register([
-    //   {
-    //     name: 'orderService',
-    //     transport: Transport.RMQ,
-    //     options: {
-    //       urls: ['amqp://localhost'],
-    //       queue: 'order-queue',
-    //       queueOptions: {
-    //         durable: true,
-    //       },
-    //     },
-    //   },
-    //   {
-    //     name: 'customerService',
-    //     transport: Transport.RMQ,
-    //     options: {
-    //       urls: ['amqp://localhost'],
-    //       queue: 'customer-queue',
-    //       queueOptions: {
-    //         durable: true,
-    //       },
-    //     },
-    //   },
-    //   {
-    //     name: 'stockService',
-    //     transport: Transport.RMQ,
-    //     options: {
-    //       urls: ['amqp://localhost'],
-    //       queue: 'stock-queue',
-    //       queueOptions: {
-    //         durable: true,
-    //       },
-    //     },
-    //   },
-    // ]),
     ClientsModule.registerAsync([
       {
         name: 'orderService',
         useFactory: async () => ({
           transport: Transport.RMQ,
           options: {
-            urls: ['amqp://localhost:5672'],
+            urls: ['amqp://localhost', 'amqp://guest:guest@rabbitmq:5672'],
             queue: 'order-queue',
             queueOptions: {
               durable: true,
@@ -57,7 +22,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         useFactory: async () => ({
           transport: Transport.RMQ,
           options: {
-            urls: ['amqp://localhost'],
+            urls: ['amqp://localhost', 'amqp://guest:guest@rabbitmq:5672'],
             queue: 'customer-queue',
             queueOptions: {
               durable: true,
@@ -70,7 +35,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         useFactory: async () => ({
           transport: Transport.RMQ,
           options: {
-            urls: ['amqp://localhost'],
+            urls: ['amqp://localhost', 'amqp://guest:guest@rabbitmq:5672'],
             queue: 'stock-queue',
             queueOptions: {
               durable: true,
@@ -83,7 +48,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
         useFactory: async () => ({
           transport: Transport.RMQ,
           options: {
-            urls: ['amqp://localhost'],
+            urls: ['amqp://localhost', 'amqp://guest:guest@rabbitmq:5672'],
             queue: 'sec-queue',
             queueOptions: {
               durable: true,
