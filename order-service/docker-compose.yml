@@ -1,0 +1,17 @@
+version: '2.6'
+
+services:
+  order-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: order
+    ports:
+      - '4001:4001'
+    depends_on:
+      - rabbitmq
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - '15672:15672'
+      - '5672:5672'
