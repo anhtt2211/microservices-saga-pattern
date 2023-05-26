@@ -3,39 +3,93 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 
 @Module({
   imports: [
-    ClientsModule.register([
+    // ClientsModule.register([
+    //   {
+    //     name: 'orderService',
+    //     transport: Transport.RMQ,
+    //     options: {
+    //       urls: ['amqp://localhost'],
+    //       queue: 'order-queue',
+    //       queueOptions: {
+    //         durable: true,
+    //       },
+    //     },
+    //   },
+    //   {
+    //     name: 'customerService',
+    //     transport: Transport.RMQ,
+    //     options: {
+    //       urls: ['amqp://localhost'],
+    //       queue: 'customer-queue',
+    //       queueOptions: {
+    //         durable: true,
+    //       },
+    //     },
+    //   },
+    //   {
+    //     name: 'stockService',
+    //     transport: Transport.RMQ,
+    //     options: {
+    //       urls: ['amqp://localhost'],
+    //       queue: 'stock-queue',
+    //       queueOptions: {
+    //         durable: true,
+    //       },
+    //     },
+    //   },
+    // ]),
+    ClientsModule.registerAsync([
       {
         name: 'orderService',
-        transport: Transport.RMQ,
-        options: {
-          urls: ['amqp://localhost'],
-          queue: 'order-queue',
-          queueOptions: {
-            duradble: true,
+        useFactory: async () => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: ['amqp://localhost:5672'],
+            queue: 'order-queue',
+            queueOptions: {
+              durable: true,
+            },
           },
-        },
+        }),
       },
       {
         name: 'customerService',
-        transport: Transport.RMQ,
-        options: {
-          urls: ['amqp://localhost'],
-          queue: 'customer-queue',
-          queueOptions: {
-            durable: true,
+        useFactory: async () => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: ['amqp://localhost'],
+            queue: 'customer-queue',
+            queueOptions: {
+              durable: true,
+            },
           },
-        },
+        }),
       },
       {
         name: 'stockService',
-        transport: Transport.RMQ,
-        options: {
-          urls: ['amqp://localhost'],
-          queue: 'stock-queue',
-          queueOptions: {
-            durable: true,
+        useFactory: async () => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: ['amqp://localhost'],
+            queue: 'stock-queue',
+            queueOptions: {
+              durable: true,
+            },
           },
-        },
+        }),
+      },
+      {
+        name: 'sagaService',
+        useFactory: async () => ({
+          transport: Transport.RMQ,
+          options: {
+            urls: ['amqp://localhost'],
+            queue: 'sec-queue',
+            queueOptions: {
+              durable: true,
+            },
+          },
+        }),
       },
     ]),
   ],

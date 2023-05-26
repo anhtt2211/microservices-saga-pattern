@@ -9,49 +9,13 @@ async function bootstrap() {
   try {
     const app = await NestFactory.create(AppModule, { snapshot: true });
 
-    // connect to order-service
+    // connect to own queue
     app.connectMicroservice(
       {
         transport: Transport.RMQ,
         options: {
           urls: ['amqp://localhost'],
-          queue: 'order-queue',
-          queueOptions: {
-            durable: true,
-          },
-          connectionOptions: {
-            timeout: 10000,
-          },
-        },
-      },
-      { inheritAppConfig: true },
-    );
-
-    // connect to customer-service
-    app.connectMicroservice(
-      {
-        transport: Transport.RMQ,
-        options: {
-          urls: ['amqp://localhost'],
-          queue: 'customer-queue',
-          queueOptions: {
-            durable: true,
-          },
-          connectionOptions: {
-            timeout: 10000,
-          },
-        },
-      },
-      { inheritAppConfig: true },
-    );
-
-    // connect to stock-service
-    app.connectMicroservice(
-      {
-        transport: Transport.RMQ,
-        options: {
-          urls: ['amqp://localhost'],
-          queue: 'stock-queue',
+          queue: 'sec-queue',
           queueOptions: {
             durable: true,
           },
