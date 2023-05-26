@@ -62,7 +62,7 @@ export class CustomerService {
       select: ['id', 'balance'],
     });
 
-    Logger.log('Start compensation process payment');
+    Logger.error('Start compensation process payment');
     return !!(await this.customerRepository.save({
       id: customer.id,
       balance: customer.balance + totalAmount,

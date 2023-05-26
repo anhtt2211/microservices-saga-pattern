@@ -49,9 +49,15 @@ export class ProductService {
       return false;
     }
 
-    return productEntities.every(
+    const isReserveStock = productEntities.every(
       (product, index) => product.stockQuantity - products[index].quantity >= 0,
     );
+
+    isReserveStock
+      ? Logger.log('Can reserveStock')
+      : Logger.error('Cannot reserveStock');
+
+    return isReserveStock;
   }
 
   async updateInventory(payload: {
@@ -68,6 +74,7 @@ export class ProductService {
       return false;
     }
 
+    Logger.log('Start updateInventory');
     const productsUpdated: DeepPartial<ProductEntity>[] = productEntities.map(
       (product, index) => ({
         id: product.id,

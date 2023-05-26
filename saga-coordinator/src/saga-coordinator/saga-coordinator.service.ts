@@ -31,7 +31,6 @@ export class SagaCoordinatorService {
         this.orderService.send<any>({ cmd: 'createOrder' }, placeOrderDto),
       );
       if (order) {
-        // this.orderService.emit({ cmd: 'orderCreated' }, order);
         this.sagaService.emit({ cmd: 'orderCreated' }, order);
       }
 
@@ -60,16 +59,11 @@ export class SagaCoordinatorService {
       );
 
       if (isPay) {
-        // this.customerService.emit(
-        //   { cmd: 'customerValidated' },
-        //   { orderId, customerId, products, totalAmount },
-        // );
         this.sagaService.emit(
           { cmd: 'customerValidated' },
           { orderId, customerId, products, totalAmount },
         );
       } else {
-        // this.customerService.emit({ cmd: 'customerInvalidated' }, { orderId });
         this.sagaService.emit({ cmd: 'customerInvalidated' }, { orderId });
       }
     } catch (error) {
@@ -94,18 +88,8 @@ export class SagaCoordinatorService {
         ),
       );
       if (isReserveStock) {
-        // this.stockService.emit({ cmd: 'stockReserved' }, { orderId, products });
         this.sagaService.emit({ cmd: 'stockReserved' }, { orderId, products });
       } else {
-        // this.stockService.emit(
-        //   { cmd: 'stockNotAvailable' },
-        //   {
-        //     orderId,
-        //     customerId,
-        //     products,
-        //     totalAmount,
-        //   },
-        // );
         this.sagaService.emit(
           { cmd: 'stockNotAvailable' },
           {
