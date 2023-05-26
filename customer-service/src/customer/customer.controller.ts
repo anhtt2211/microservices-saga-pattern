@@ -1,4 +1,4 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import {
   EventPattern,
   MessagePattern,
@@ -17,6 +17,13 @@ export class CustomerController {
     const customer = await this.customerService.createCustomer(
       createCustomerDto,
     );
+
+    return { customer };
+  }
+
+  @Get(':id')
+  async getCustomer(@Param('id') id: number) {
+    const customer = await this.customerService.findOne(id);
 
     return { customer };
   }
