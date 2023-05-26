@@ -12,11 +12,8 @@ import {
 export class SagaCoordinatorService {
   constructor(
     @Inject('orderService') private readonly orderService: ClientProxy,
-
     @Inject('customerService') private readonly customerService: ClientProxy,
-
     @Inject('stockService') private readonly stockService: ClientProxy,
-
     @Inject('sagaService') private readonly sagaService: ClientProxy,
   ) {
     this.orderService.connect();
@@ -79,16 +76,14 @@ export class SagaCoordinatorService {
     totalAmount,
   }: IProcessPaymentEvent): Promise<void> {
     try {
-      const isReserveStock = await firstValueFrom(
+      const isStockReserve = await firstValueFrom(
         this.stockService.send<boolean>(
-          { cmd: 'reserveStock' },
-          {
-            products,
-          },
+          { cmd: 'updateInventory' },
+          { products },
         ),
       );
-      if (isReserveStock) {
-        this.sagaService.emit({ cmd: 'stockReserved' }, { orderId, products });
+      if (isStockReserve) {
+        this.orderService.emit({ cmd: 'orderConfirmed' }, { orderId });
       } else {
         this.sagaService.emit(
           { cmd: 'stockNotAvailable' },
@@ -101,7 +96,7 @@ export class SagaCoordinatorService {
         );
       }
     } catch (error) {
-      Logger.error('processCustomerValidated:error');
+      Logger.error('processStockReserved:error');
       Logger.error(error);
     }
   }
@@ -144,11 +139,6 @@ export class SagaCoordinatorService {
       },
     );
 
-    this.orderService.emit(
-      { cmd: 'orderCancelled' },
-      {
-        orderId,
-      },
-    );
+    this.orderService.emit({ cmd: 'orderCancelled' }, { orderId });
   }
 }

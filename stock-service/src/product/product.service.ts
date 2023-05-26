@@ -74,6 +74,14 @@ export class ProductService {
       return false;
     }
 
+    const canReserve = productEntities.every(
+      (product, index) => product.stockQuantity - products[index].quantity >= 0,
+    );
+    if (!canReserve) {
+      Logger.error('Cannot reserveStock');
+      return false;
+    }
+
     Logger.log('Start updateInventory');
     const productsUpdated: DeepPartial<ProductEntity>[] = productEntities.map(
       (product, index) => ({
