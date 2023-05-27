@@ -10,13 +10,7 @@ import { CommandModule } from './commands/command.module';
 import { QueryModule } from './queries/query.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([OrderEntity, OrderItemEntity]),
-    RabbitMq,
-    CqrsModule,
-    CommandModule,
-    QueryModule,
-  ],
+  imports: [RabbitMq, CqrsModule, CommandModule, QueryModule],
   providers: [OrderService],
   controllers: [OrderController],
   exports: [OrderService],
