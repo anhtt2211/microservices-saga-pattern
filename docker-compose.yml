@@ -1,0 +1,32 @@
+version: "2.6"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+  saga-coordinator:
+    build:
+      context: ./saga-coordinator
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+  customer-service:
+    build:
+      context: ./customer-service
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+  stock-service:
+    build:
+      context: ./stock-service
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
