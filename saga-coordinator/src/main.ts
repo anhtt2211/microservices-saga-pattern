@@ -13,6 +13,7 @@ async function bootstrap() {
       console.log(`Primary ${process.pid} is running`);
 
       // Fork workers, just separate 2 worker for test
+      // Need convert 2 -> cpus().length
       for (let i = 0; i < 2; i++) {
         cluster.fork();
       }
