@@ -5,6 +5,7 @@ This repository contains a set of microservices for managing the order process. 
 ## Table of Contents
 
 - [Introduction](#introduction)
+- [Dependencies](#dependencies)
 - [Services](#services)
   - [Order Service](#order-service)
   - [Customer Service](#customer-service)
@@ -16,6 +17,11 @@ This repository contains a set of microservices for managing the order process. 
 ## Introduction
 
 The order process microservices provide a distributed architecture for handling the order placement, payment processing, and inventory management. It follows the saga pattern for managing long-lived transactions that span multiple services.
+
+## Dependencies
+
+- RabbitMQ - https://www.rabbitmq.com/
+- PostgreSQL - https://www.postgresql.org/
 
 ## Services
 
@@ -37,31 +43,49 @@ The saga-coordinator is the central orchestrator of the order processing workflo
 
 ## Getting Started
 
-To run the order process microservices locally using Docker Compose, follow these steps:
+### Installation
 
-1. Clone this repository:
+Install dependencies for root.
 
-   `https://github.com/anhtt2211/microservices-saga-pattern.git`
+```
+npm install
+```
 
-2. Navigate to the cloned directory:
+Install service deps
 
-   `cd microservices-saga-pattern`
+```
+npm run service-install
+```
 
-3. Set up the necessary configurations for each service, such as database connections and external service credentials. Modify the environment variables in the respective service's Docker Compose file (docker-compose.yml).
+### Build
 
-4. Build and start the services using Docker Compose:
+Build services
 
-   `docker-compose up -d`
+```
+npm run build
+```
 
-   This command will build the Docker images and start the containers in detached mode.
+### Run
 
-5. Ensure that the services are running correctly by checking the logs:
+Start services in development mode
 
-   `docker-compose logs`
+```
+npm start
+```
 
-6. Verify that the services are communicating with each other correctly by accessing their API endpoints.
+start services in production mode
 
-7. Use the provided APIs or a client application to place orders, process payments, and update inventory.
+```
+npm run start:prod
+```
+
+### Run docker-compose file with build
+
+Build docker-compose images
+
+```
+docker-compose up --build
+```
 
 ## Contributing
 
