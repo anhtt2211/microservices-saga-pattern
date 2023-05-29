@@ -2,6 +2,11 @@
 
 This repository contains a set of microservices for managing the order process. The system is composed of four services: order-service, customer-service, stock-service, and saga-coordinator.
 
+- Order Processing Microservices
+  ![Order Process](./assets/order-process.png)
+- Architecture
+  ![SWA](./assets/architecture.png)
+
 ## Table of Contents
 
 - [Introduction](#introduction)
