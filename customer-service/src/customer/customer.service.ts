@@ -1,82 +1,51 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ClientProxy } from '@nestjs/microservices';
-import { InjectRepository } from '@nestjs/typeorm';
-import { CustomerEntity } from 'src/entities/customer.entity';
-import { Repository } from 'typeorm';
+import { Injectable } from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
+import { CustomerEntity } from '../entities';
+import {
+  CompensateProcessPaymentCommand,
+  CreateCustomerCommand,
+  ProcessPaymentCommand,
+} from './commands';
 import { CreateCustomerDto } from './customer.interface';
+import { FindOneCustomerQuery } from './queries';
 
 @Injectable()
 export class CustomerService {
   constructor(
-    @InjectRepository(CustomerEntity)
-    private readonly customerRepository: Repository<CustomerEntity>,
-
-    @Inject('customerClient')
-    private readonly sagaClient: ClientProxy,
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
   ) {}
 
   async findOne(id: number): Promise<CustomerEntity> {
-    return await this.customerRepository.findOne({ where: { id } });
+    return await this.queryBus.execute(new FindOneCustomerQuery(id));
   }
 
   async createCustomer(
     createCustomerDto: CreateCustomerDto,
   ): Promise<CustomerEntity> {
-    // Create the customer in the database
-    const customer = await this.customerRepository.save({
-      ...createCustomerDto,
-    });
-
-    return customer;
+    return await this.commandBus.execute(
+      new CreateCustomerCommand(createCustomerDto),
+    );
   }
 
   async processPayment(payload: {
     customerId: number;
     totalAmount: number;
   }): Promise<boolean> {
-    const { customerId, totalAmount } = payload;
-
-    const customer = await this.customerRepository.findOne({
-      where: { id: customerId },
-    });
-    if (customer.balance < totalAmount) {
-      Logger.error('Cannot process payment');
-      return false;
-    }
-
-    Logger.log('Start process payment');
-    return !!(await this.customerRepository.save({
-      ...customer,
-      balance: customer.balance - totalAmount,
-    }));
+    return await this.commandBus.execute(
+      new ProcessPaymentCommand(payload.customerId, payload.totalAmount),
+    );
   }
 
   async compensateProcessPayment(payload: {
     customerId: number;
     totalAmount: number;
   }): Promise<boolean> {
-    const { customerId, totalAmount } = payload;
-
-    const customer = await this.customerRepository.findOne({
-      where: { id: customerId },
-      select: ['id', 'balance'],
-    });
-
-    Logger.error('Start compensation process payment');
-    return !!(await this.customerRepository.save({
-      id: customer.id,
-      balance: customer.balance + totalAmount,
-    }));
-  }
-
-  async isCustomerValid(
-    customerId: number,
-    totalMount: number,
-  ): Promise<boolean> {
-    const customer = await this.customerRepository.findOne({
-      where: { id: customerId },
-      select: ['balance'],
-    });
-    return customer.balance >= totalMount;
+    return await this.commandBus.execute(
+      new CompensateProcessPaymentCommand(
+        payload.customerId,
+        payload.totalAmount,
+      ),
+    );
   }
 }
