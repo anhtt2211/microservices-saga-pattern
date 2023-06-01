@@ -1,13 +1,12 @@
 import { Module } from '@nestjs/common';
-import { CqrsModule } from '@nestjs/cqrs';
-import { CommandModule } from './commands/command.module';
-import { CustomerController } from './customer.controller';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { CustomerEntity } from 'src/entities/customer.entity';
+import { RabbitMq } from 'src/rabbitmq/rabbitmq.module';
 import { CustomerService } from './customer.service';
-import { QueryModule } from './queries/query.module';
-import { RabbitMq } from '../rabbitmq/rabbitmq.module';
+import { CustomerController } from './customer.controller';
 
 @Module({
-  imports: [RabbitMq, CqrsModule, CommandModule, QueryModule],
+  imports: [TypeOrmModule.forFeature([CustomerEntity]), RabbitMq],
   providers: [CustomerService],
   controllers: [CustomerController],
   exports: [CustomerService],
