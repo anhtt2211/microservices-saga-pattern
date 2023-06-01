@@ -1,99 +1,61 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
+import { Injectable } from '@nestjs/common';
+import { CommandBus, QueryBus } from '@nestjs/cqrs';
 import { ProductEntity } from 'src/entities';
-import { DeepPartial, In, Repository } from 'typeorm';
+import {
+  CreateProductCommand,
+  DeleteProductCommand,
+  ReserveStockCommand,
+  UpdateInventoryCommand,
+  UpdateProductCommand,
+} from './commands';
 import { OrderItemDto } from './product.interface';
+import { FindAllProductsQuery, FindOneProductQuery } from './queries';
 
 @Injectable()
 export class ProductService {
   constructor(
-    @InjectRepository(ProductEntity)
-    private readonly productRepository: Repository<ProductEntity>,
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
   ) {}
 
   async getProducts(): Promise<ProductEntity[]> {
-    return this.productRepository.find();
+    return await this.queryBus.execute(new FindAllProductsQuery());
   }
 
   async getProductById(productId: number): Promise<ProductEntity> {
-    return this.productRepository.findOne({ where: { id: productId } });
+    return await this.queryBus.execute(new FindOneProductQuery(productId));
   }
 
   async createProduct(
     productData: Partial<ProductEntity>,
   ): Promise<ProductEntity> {
-    const product = this.productRepository.create(productData);
-    return this.productRepository.save(product);
+    return await this.commandBus.execute(new CreateProductCommand(productData));
   }
 
   async updateProduct(
     productId: number,
     productData: Partial<ProductEntity>,
   ): Promise<ProductEntity> {
-    const product = await this.productRepository.findOne({
-      where: { id: productId },
-    });
-    Object.assign(product, productData);
-    return this.productRepository.save(product);
+    return await this.commandBus.execute(
+      new UpdateProductCommand(productId, productData),
+    );
   }
 
   async reserveStock(payload: { products: OrderItemDto[] }): Promise<boolean> {
-    const { products } = payload;
-
-    const ids = products.map((prd) => prd.productId);
-    const productEntities = await this.productRepository.find({
-      where: { id: In(ids) },
-    });
-    if (productEntities.length !== products.length) {
-      Logger.error('At least one of product in payload does not match');
-      return false;
-    }
-
-    const isReserveStock = productEntities.every(
-      (product, index) => product.stockQuantity - products[index].quantity >= 0,
+    return await this.commandBus.execute(
+      new ReserveStockCommand(payload.products),
     );
-
-    isReserveStock
-      ? Logger.log('Can reserveStock')
-      : Logger.error('Cannot reserveStock');
-
-    return isReserveStock;
   }
 
   async updateInventory(payload: {
     products: OrderItemDto[];
   }): Promise<boolean> {
-    const { products } = payload;
-
-    const ids = products.map((prd) => prd.productId);
-    const productEntities = await this.productRepository.find({
-      where: { id: In(ids) },
-    });
-    if (productEntities.length !== products.length) {
-      Logger.error('At least one of product in payload does not match');
-      return false;
-    }
-
-    const canReserve = productEntities.every(
-      (product, index) => product.stockQuantity - products[index].quantity >= 0,
+    return await this.commandBus.execute(
+      new UpdateInventoryCommand(payload.products),
     );
-    if (!canReserve) {
-      Logger.error('Cannot reserveStock');
-      return false;
-    }
-
-    Logger.log('Start updateInventory');
-    const productsUpdated: DeepPartial<ProductEntity>[] = productEntities.map(
-      (product, index) => ({
-        id: product.id,
-        stockQuantity: product.stockQuantity - products[index].quantity,
-      }),
-    );
-
-    return !!(await this.productRepository.save(productsUpdated));
   }
 
   async deleteProduct(productId: number): Promise<void> {
-    await this.productRepository.delete(productId);
+    return await this.commandBus.execute(new DeleteProductCommand(productId));
   }
 }
