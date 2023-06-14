@@ -1,0 +1,66 @@
+version: "2.6"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+  saga-coordinator-1:
+    build:
+      context: ./saga-coordinator
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+    ports:
+      - "41:4000"
+  saga-coordinator-2:
+    build:
+      context: ./saga-coordinator
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+    ports:
+      - "42:4000"
+  saga-coordinator-backup:
+    build:
+      context: ./saga-coordinator
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+    ports:
+      - "43:4000"
+
+  order-service:
+    build:
+      context: ./order-service
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+    ports:
+      - "4001:4001"
+
+  customer-service:
+    build:
+      context: ./customer-service
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+    ports:
+      - "4002:4002"
+
+  stock-service:
+    build:
+      context: ./stock-service
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+    ports:
+      - "4003:4003"
+  nginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - saga-coordinator-1
+      - saga-coordinator-2
