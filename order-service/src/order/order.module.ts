@@ -5,9 +5,12 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { OrderEntity } from '../entities';
 import { OrderItemEntity } from '../entities/order-item.entity';
 import { RabbitMq } from '../rabbitmq/rabbitmq.module';
+import { CqrsModule } from '@nestjs/cqrs';
+import { CommandModule } from './commands/command.module';
+import { QueryModule } from './queries/query.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([OrderEntity, OrderItemEntity]), RabbitMq],
+  imports: [RabbitMq, CqrsModule, CommandModule, QueryModule],
   providers: [OrderService],
   controllers: [OrderController],
   exports: [OrderService],

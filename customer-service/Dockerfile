@@ -1,23 +1,30 @@
-# Use an official Node.js image as the base image
-FROM node:14.19.1-alpine
+FROM node:18
 
-# Set the working directory in the image
-WORKDIR /saga-coordinator
+WORKDIR /app
 
-# Copy the package.json and yarn.lock files to the container
-COPY package.json package*.json yarn.lock ./
+COPY package.json yarn.lock ./
 
-# Install dependencies
-RUN npm install
+RUN yarn
 
-# Copy the rest of the application code to the container
 COPY . .
 
-# Build the NestJS application
-# RUN npm run build
+RUN yarn build
 
-# Expose port 4000 for incoming traffic
 EXPOSE 4002
 
-# Specify the command to run when the container starts
-CMD ["npm", "run", "start"]
+# Set environment variables for the database connection
+ENV DATABASE_HOST=host.docker.internal
+ENV DATABASE_PORT=5432
+ENV DATABASE_ENGINE=postgres
+ENV DATABASE_USERNAME=anhtran
+ENV DATABASE_PASSWORD=_briantran2211
+ENV DATABASE_NAME=saga-customer
+
+ENV TYPEORM_ENTITIES=/entities/**.entity{.ts,.js}
+ENV TYPEORM_MIGRATIONS=src/migrations/migrations/*{.ts,.js}
+ENV TYPEORM_MIGRATIONS_DIR=src/database/migrations
+ENV TYPEORM_LOGGING=true
+ENV TYPEORM_SYNCHRONIZE=true
+ENV TYPEORM_MIGRATION_RUN=false
+
+CMD ["yarn", "start:prod"]
