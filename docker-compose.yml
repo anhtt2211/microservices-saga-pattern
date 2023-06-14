@@ -6,14 +6,30 @@ services:
     ports:
       - "15672:15672"
       - "5672:5672"
-  saga-coordinator:
+  saga-coordinator-1:
     build:
       context: ./saga-coordinator
       dockerfile: Dockerfile
     depends_on:
       - rabbitmq
     ports:
-      - "4000:4000" # Replace 8001 with the actual port used by saga-coordinator
+      - "41:4000"
+  saga-coordinator-2:
+    build:
+      context: ./saga-coordinator
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+    ports:
+      - "42:4000"
+  saga-coordinator-backup:
+    build:
+      context: ./saga-coordinator
+      dockerfile: Dockerfile
+    depends_on:
+      - rabbitmq
+    ports:
+      - "43:4000"
 
   order-service:
     build:
@@ -22,7 +38,7 @@ services:
     depends_on:
       - rabbitmq
     ports:
-      - "4001:4001" # Replace 8002 with the actual port used by order-service
+      - "4001:4001"
 
   customer-service:
     build:
@@ -31,7 +47,7 @@ services:
     depends_on:
       - rabbitmq
     ports:
-      - "4002:4002" # Replace 8003 with the actual port used by customer-service
+      - "4002:4002"
 
   stock-service:
     build:
@@ -40,4 +56,11 @@ services:
     depends_on:
       - rabbitmq
     ports:
-      - "4003:4003" # Replace 8004 with the actual port used by stock-service
+      - "4003:4003"
+  nginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+    depends_on:
+      - saga-coordinator-1
+      - saga-coordinator-2
