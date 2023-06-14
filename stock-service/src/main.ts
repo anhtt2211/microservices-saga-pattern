@@ -43,8 +43,8 @@ async function bootstrap() {
 
       await app.startAllMicroservices();
 
-      await app.listen(4001, () =>
-        Logger.log('Stock-Service running on port: ' + 4001, 'Bootstrap'),
+      await app.listen(4003, () =>
+        Logger.log('Stock-Service running on port: ' + 4003, 'Bootstrap'),
       );
     }
   } catch (error) {

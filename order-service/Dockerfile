@@ -1,8 +1,15 @@
-FROM node:14
+FROM node:18
+
 WORKDIR /app
-COPY package*.json ./
-RUN npm install --production
+
+COPY package.json yarn.lock ./
+
+RUN yarn
+
 COPY . .
+
+RUN yarn build
+
 EXPOSE 4001
 
 # Set environment variables for the database connection
@@ -20,4 +27,4 @@ ENV TYPEORM_LOGGING=true
 ENV TYPEORM_SYNCHRONIZE=true
 ENV TYPEORM_MIGRATION_RUN=false
 
-CMD ["npm", "run", "start:prod"]
+CMD ["yarn", "start:prod"]

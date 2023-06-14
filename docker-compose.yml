@@ -12,21 +12,32 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - rabbitmq
+    ports:
+      - "4000:4000" # Replace 8001 with the actual port used by saga-coordinator
+
   order-service:
     build:
       context: ./order-service
       dockerfile: Dockerfile
     depends_on:
       - rabbitmq
+    ports:
+      - "4001:4001" # Replace 8002 with the actual port used by order-service
+
   customer-service:
     build:
       context: ./customer-service
       dockerfile: Dockerfile
     depends_on:
       - rabbitmq
+    ports:
+      - "4002:4002" # Replace 8003 with the actual port used by customer-service
+
   stock-service:
     build:
       context: ./stock-service
       dockerfile: Dockerfile
     depends_on:
       - rabbitmq
+    ports:
+      - "4003:4003" # Replace 8004 with the actual port used by stock-service
