@@ -16,7 +16,7 @@ import { CustomerModule } from './customer/customer.module';
       entities: [__dirname + process.env.TYPEORM_ENTITIES],
       migrations: [process.env.TYPEORM_MIGRATIONS],
       logging: process.env.TYPEORM_LOGGING === 'true',
-      synchronize: process.env.TYPEORM_SYNCHRONIZE === 'true',
+      synchronize: true,
       migrationsRun: process.env.TYPEORM_MIGRATION_RUN === 'true',
       migrationsTableName: 'migrations',
     }),

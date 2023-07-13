@@ -1,6 +1,17 @@
 version: "2.6"
 
 services:
+  postgres:
+    image: postgres:${POSTGRES_VERSION}
+    environment:
+      - POSTGRES_USER=${POSTGRES_USERNAME}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - ${POSTGRES_PORT}:5432
+    volumes:
+      - /data/postgres/
+    env_file:
+      - .env
   rabbitmq:
     image: rabbitmq:3-management
     ports:
@@ -39,6 +50,10 @@ services:
       - rabbitmq
     ports:
       - "4001:4001"
+    env_file:
+      - ./order-service/.env
+    environment:
+      - DATABASE_HOST=host.docker.internal
 
   customer-service:
     build:
@@ -48,6 +63,10 @@ services:
       - rabbitmq
     ports:
       - "4002:4002"
+    env_file:
+      - ./customer-service/.env
+    environment:
+      - DATABASE_HOST=host.docker.internal
 
   stock-service:
     build:
@@ -57,6 +76,11 @@ services:
       - rabbitmq
     ports:
       - "4003:4003"
+    env_file:
+      - ./stock-service/.env
+    environment:
+      - DATABASE_HOST=host.docker.internal
+
   nginx:
     build: ./nginx
     ports:
