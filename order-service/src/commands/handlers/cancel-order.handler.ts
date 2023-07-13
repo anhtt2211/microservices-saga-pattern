@@ -1,10 +1,10 @@
 import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { CancelOrderCommand } from '../impl';
 import { InjectRepository } from '@nestjs/typeorm';
-import { OrderEntity } from '../../../entities';
 import { Repository } from 'typeorm';
 import { Logger } from '@nestjs/common';
-import { OrderStatus } from '../../order.enum';
+import { OrderEntity } from '../../entities';
+import { OrderStatus } from '../../order/order.enum';
 
 @CommandHandler(CancelOrderCommand)
 export class CancelOrderCommandHandler

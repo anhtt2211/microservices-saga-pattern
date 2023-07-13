@@ -3,7 +3,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { TypeOrmModule } from '@nestjs/typeorm';
 
 import { CommandHandlers } from '.';
-import { OrderEntity, OrderItemEntity } from '../../entities';
+import { OrderEntity, OrderItemEntity } from '../entities';
 
 @Module({
   imports: [

@@ -2,10 +2,9 @@ import { CommandHandler, ICommandHandler } from '@nestjs/cqrs';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
-import { OrderEntity } from '../../../entities';
-import { OrderStatus } from '../../order.enum';
-import { OrderItemEntity } from '../../../entities/order-item.entity';
 import { CreateOrderCommand } from '../impl';
+import { OrderEntity, OrderItemEntity } from '../../entities';
+import { OrderStatus } from '../../order/order.enum';
 
 @CommandHandler(CreateOrderCommand)
 export class CreateOrderCommandHandler
